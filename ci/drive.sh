@@ -17,29 +17,36 @@ adb shell pm grant com.noirmusic.app android.permission.POST_NOTIFICATIONS
 adb logcat -c
 adb shell am start -n com.noirmusic.app/.MainActivity
 S 01_home 6
-adb shell input swipe 540 1800 540 700 300; S 02_home_scrolled 1
-adb shell input swipe 540 700 540 1800 300
 T "Library"; S 03_library_songs
 T "Albums"; S 04_library_albums
 T "Artists"; S 05_library_artists
 T "Folders"; S 06_library_folders
 T "Playlists"; S 07_library_playlists
 T "Songs"; sleep 1
-T "Midnight Drive"; S 08_mini_player 3
-adb shell input tap 400 2150; S 09_now_playing 3
-T "Lyrics"; S 10_lyrics 4
+T "Afterglow"; S 08_mini_player 3
+T "Next" 0 -420 0; S 09_now_playing 3
+T "Lyrics"; S 10_lyrics 5
 T "Lyrics"
 T "Queue"; S 11_queue 2
 adb shell input keyevent 4; sleep 1
-T "Equalizer"; S 12_equalizer 2
+T "More" 0 0 0; S 12_track_menu 2
 adb shell input keyevent 4; sleep 1
+T "Sleep timer"; S 13_sleep 2
 adb shell input keyevent 4; sleep 1
-T "Search"; sleep 1; adb shell input tap 540 520; adb shell input text "luma"; S 13_search 2
-adb shell input keyevent 4
-T "Settings"; S 14_settings
-adb shell input swipe 540 1800 540 600 300; S 15_settings_2 1
-adb shell input swipe 540 1800 540 600 300; S 16_settings_3 1
+T "Speed and pitch"; S 14_speed 2
+adb shell input keyevent 4; sleep 1
+T "Close player"; sleep 2
+T "Home"; S 15_home_playing 3
+T "Library"; sleep 1
+T "Concrete Garden" 0 0 0 long; S 16_selection 2
+adb shell input keyevent 4; sleep 1
+T "Search"; sleep 1
+T "Songs, artists, albums"; adb shell input text "luma"; sleep 1; adb shell input keyevent 111; S 17_search 2
+T "Settings"; S 18_settings
+adb shell input swipe 540 1800 540 600 300; S 19_settings_2 1
+adb shell input swipe 540 1800 540 600 300; S 20_settings_3 1
+T "Home"; sleep 1
+T "Equalizer"; S 21_equalizer 2
 adb logcat -d > shots/logcat_full.txt
-grep -E "FATAL|AndroidRuntime|com.noirmusic" shots/logcat_full.txt | head -200 > shots/logcat_app.txt
-adb shell dumpsys activity services com.noirmusic.app | head -30 > shots/services.txt
+grep -E "FATAL|AndroidRuntime" -A8 shots/logcat_full.txt | head -80 > shots/crash.txt
 ls -la shots

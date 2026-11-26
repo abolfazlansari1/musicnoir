@@ -73,6 +73,17 @@ class MainActivity : ComponentActivity() {
         setContent {
             NoirTheme(vm.accent, vm.amoled) { NoirRoot(vm) }
         }
+        handleIntent(intent)
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(i: android.content.Intent?) {
+        if (i?.action == android.content.Intent.ACTION_VIEW) i.data?.let { vm.playExternal(it) }
     }
 
     override fun onStart() { super.onStart(); vm.setForeground(true) }

@@ -33,6 +33,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.content.ContentUris
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import org.json.JSONArray
 import org.json.JSONObject
@@ -105,6 +107,7 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
     private var artFor = -1L
     private var lastRecorded = -1L
     private var restored = false
+    private var pendingUri: Uri? = null
     private var foreground = true
 
     // ---------- lyrics / delete ----------
@@ -149,6 +152,7 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 syncQueue(); syncState()
                 tryRestore()
+                tryPlayPending()
             }
         }, MoreExecutors.directExecutor())
         runCatching { app.contentResolver.registerContentObserver(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, true, observer) }
@@ -404,6 +408,37 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
             .setIsPlayable(true).setIsBrowsable(false)
             .setArtworkUri(ArtProvider.uriFor(t)).build()
         return MediaItem.Builder().setUri(t.uri).setMediaId(t.id.toString()).setMediaMetadata(meta).build()
+    }
+
+    // ---------- open an audio file from outside the app ----------
+    fun playExternal(uri: Uri) { pendingUri = uri; tryPlayPending() }
+
+    private fun tryPlayPending() {
+        val uri = pendingUri ?: return
+        if (controller == null) return
+        pendingUri = null
+        viewModelScope.launch {
+            val track = withContext(Dispatchers.IO) { resolveExternal(uri) }
+            play(listOf(track))
+        }
+    }
+
+    private fun resolveExternal(uri: Uri): MusicTrack {
+        val mediaId = runCatching { if (uri.authority == "media") ContentUris.parseId(uri) else -1L }.getOrDefault(-1L)
+        tracks.firstOrNull { it.id == mediaId }?.let { return it }
+        var title = uri.lastPathSegment?.substringAfterLast('/')?.substringBeforeLast('.')?.ifBlank { null } ?: "Unknown title"
+        var artist = "Unknown artist"; var album = "Unknown album"; var dur = 0L
+        val r = MediaMetadataRetriever()
+        try {
+            r.setDataSource(ctx, uri)
+            r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)?.takeIf { it.isNotBlank() }?.let { title = it }
+            r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)?.takeIf { it.isNotBlank() }?.let { artist = it }
+            r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM)?.takeIf { it.isNotBlank() }?.let { album = it }
+            dur = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
+        } catch (_: Exception) {
+        } finally { runCatching { r.release() } }
+        val id = -(Math.abs(uri.toString().hashCode().toLong()) + 1_000_000L)
+        return MusicTrack(id, title, artist, album, dur, uri, 0L, null, folder = "External")
     }
 
     // ---------- playback actions ----------

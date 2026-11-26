@@ -1,6 +1,9 @@
 package com.noirmusic.app
 
+import android.os.Build
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
@@ -30,8 +33,8 @@ class NoirColors(
     val bg: Color, val panel: Color, val panel2: Color, val muted: Color, val text: Color
 )
 
-fun buildColors(accentIndex: Int, amoled: Boolean): NoirColors {
-    val a = AccentChoices[accentIndex.coerceIn(0, AccentChoices.lastIndex)].second
+fun buildColors(accentIndex: Int, amoled: Boolean, dynamic: Color? = null): NoirColors {
+    val a = dynamic ?: AccentChoices[accentIndex.coerceIn(0, AccentChoices.lastIndex)].second
     return NoirColors(
         accent = a,
         accentSoft = lerp(a, Color.White, .35f),
@@ -51,7 +54,9 @@ val N: NoirColors
 
 @Composable
 fun NoirTheme(accentIndex: Int, amoled: Boolean, content: @Composable () -> Unit) {
-    val c = remember(accentIndex, amoled) { buildColors(accentIndex, amoled) }
+    val ctx = LocalContext.current
+    val dyn = if (Build.VERSION.SDK_INT >= 31 && accentIndex == AccentChoices.size) dynamicDarkColorScheme(ctx).primary else null
+    val c = remember(accentIndex, amoled, dyn) { buildColors(accentIndex, amoled, dyn) }
     val base = Typography()
     val typography = base.copy(
         titleLarge = base.titleLarge.copy(fontWeight = FontWeight.ExtraBold, letterSpacing = (-.2).sp),

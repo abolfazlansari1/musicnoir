@@ -220,7 +220,10 @@ fun SettingsScreen(state: LazyListState) {
             SettingsCard("Appearance") {
                 Text("Accent color", color = N.text, fontSize = 15.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
                 Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    AccentChoices.forEachIndexed { i, (name, color) ->
+                    val swatches = AccentChoices.toMutableList().also {
+                        if (android.os.Build.VERSION.SDK_INT >= 31) it.add("Material You" to androidx.compose.material3.dynamicDarkColorScheme(ctx).primary)
+                    }
+                    swatches.forEachIndexed { i, (name, color) ->
                         val sel = vm.accent == i
                         val scale by animateFloatAsState(if (sel) 1.12f else 1f, spring(Spring.DampingRatioMediumBouncy), label = "sw")
                         Box(
