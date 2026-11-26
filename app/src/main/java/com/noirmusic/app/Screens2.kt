@@ -106,7 +106,7 @@ fun SearchScreen(state: LazyListState) {
     }
     val currentId = vm.current?.id
     Column(Modifier.fillMaxSize()) {
-        Text("Search", color = N.text, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(start = 18.dp, top = 14.dp, bottom = 10.dp))
+        ScreenTitle("Search")
         OutlinedTextField(
             query, { query = it }, Modifier.fillMaxWidth().padding(horizontal = 18.dp),
             placeholder = { Text("Songs, artists, albums", color = N.muted) },
@@ -175,7 +175,7 @@ fun SearchScreen(state: LazyListState) {
 
 @Composable
 private fun SettingsCard(title: String, content: @Composable ColumnScope.() -> Unit) {
-    Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp).clip(RoundedCornerShape(20.dp)).background(N.panel).padding(vertical = 8.dp)) {
+    Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp).clip(RoundedCornerShape(24.dp)).background(N.panel).hairline(RoundedCornerShape(24.dp)).padding(vertical = 8.dp)) {
         Text(title.uppercase(), color = N.accent, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
         content()
     }
@@ -215,7 +215,7 @@ fun SettingsScreen(state: LazyListState) {
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> if (uri != null) vm.importBackup(uri) }
     val version = remember { runCatching { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName }.getOrNull() ?: "" }
     LazyColumn(state = state, contentPadding = PaddingValues(bottom = 20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { Text("Settings", color = N.text, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(start = 18.dp, top = 14.dp)) }
+        item { ScreenTitle("Settings") }
         item {
             SettingsCard("Appearance") {
                 Text("Accent color", color = N.text, fontSize = 15.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))

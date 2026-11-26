@@ -60,6 +60,28 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
     private val vm: PlayerViewModel by viewModels()
@@ -197,6 +219,7 @@ private fun NoirRoot(vm: PlayerViewModel) {
             ) { NowPlayingScreen(onClose = { expanded = false }) }
         }
 
+        Box(Modifier.fillMaxSize()) { ToastHost(vm, expanded, Modifier.align(Alignment.BottomCenter)) }
         menuTrack?.let { t ->
             TrackMenuSheet(t, onDismiss = { menuTrack = null }, onInfo = { infoTrack = t }, onDelete = { deleteTrack = t })
         }
@@ -212,16 +235,46 @@ private fun NoirRoot(vm: PlayerViewModel) {
 @Composable
 private fun NoirNavBar(selected: Int, onMain: Boolean, onSelect: (Int) -> Unit) {
     val items = listOf("Home" to Icons.Rounded.Home, "Library" to Icons.Rounded.LibraryMusic, "Search" to Icons.Rounded.Search, "Settings" to Icons.Rounded.Settings)
-    NavigationBar(containerColor = N.bg.copy(alpha = .98f), contentColor = N.accent, tonalElevation = 0.dp) {
-        items.forEachIndexed { i, (label, icon) ->
-            NavigationBarItem(
-                selected = onMain && selected == i, onClick = { onSelect(i) },
-                icon = { Icon(icon, label) }, label = { Text(label, fontSize = 11.sp) },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = N.onAccent, selectedTextColor = N.accent, indicatorColor = N.accent,
-                    unselectedIconColor = N.muted, unselectedTextColor = N.muted
-                )
-            )
+    Column(Modifier.fillMaxWidth().background(N.bg)) {
+        HorizontalDivider(color = Color.White.copy(alpha = .06f))
+        Row(Modifier.fillMaxWidth().navigationBarsPadding().height(64.dp)) {
+            items.forEachIndexed { i, (label, icon) ->
+                val sel = onMain && selected == i
+                val tint by animateColorAsState(if (sel) N.accent else N.muted, tween(200), label = "navtint")
+                val pill by animateFloatAsState(if (sel) 1f else 0f, spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium), label = "navpill")
+                Column(
+                    Modifier.weight(1f).fillMaxHeight()
+                        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onSelect(i) },
+                    verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        Modifier.width(60.dp).height(30.dp).clip(RoundedCornerShape(15.dp)).background(N.accent.copy(alpha = .17f * pill)),
+                        contentAlignment = Alignment.Center
+                    ) { Icon(icon, label, tint = tint, modifier = Modifier.size(24.dp).graphicsLayer { scaleX = 1f + .1f * pill; scaleY = 1f + .1f * pill }) }
+                    Text(label, color = tint, fontSize = 11.sp, fontWeight = if (sel) FontWeight.SemiBold else FontWeight.Medium, modifier = Modifier.padding(top = 2.dp))
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun ToastHost(vm: PlayerViewModel, expanded: Boolean, modifier: Modifier) {
+    var shown by remember { mutableStateOf("") }
+    LaunchedEffect(vm.toast) {
+        val t = vm.toast
+        if (t != null) { shown = t; delay(2200); vm.clearToast() }
+    }
+    AnimatedVisibility(
+        visible = vm.toast != null, modifier = modifier,
+        enter = slideInVertically(tween(260)) { it / 2 } + fadeIn(tween(200)),
+        exit = slideOutVertically(tween(200)) { it / 2 } + fadeOut(tween(160))
+    ) {
+        Box(
+            Modifier.padding(bottom = if (expanded) 96.dp else 168.dp, start = 24.dp, end = 24.dp)
+                .navigationBarsPadding()
+                .clip(RoundedCornerShape(50)).background(N.panel2).hairline(RoundedCornerShape(50))
+                .padding(horizontal = 20.dp, vertical = 12.dp)
+        ) { Text(shown, color = N.text, fontSize = 14.sp, fontWeight = FontWeight.Medium) }
     }
 }

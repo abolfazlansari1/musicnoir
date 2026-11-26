@@ -69,6 +69,9 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
     var hiddenFolders by mutableStateOf(store.hiddenFolders); private set
     var searchHistory by mutableStateOf(store.searchHistory); private set
     var notice by mutableStateOf<String?>(null)
+    var toast by mutableStateOf<String?>(null); private set
+    fun showToast(message: String) { toast = message }
+    fun clearToast() { toast = null }
     var selection by mutableStateOf<List<MusicTrack>>(emptyList()); private set
     val selecting: Boolean get() = selection.isNotEmpty()
     var skipSilence by mutableStateOf(store.skipSilence); private set
@@ -242,7 +245,7 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
     fun chooseHaptics(v: Boolean) { haptics = v; store.haptics = v }
     fun chooseStartTab(v: Int) { startTab = v; store.startTab = v }
 
-    fun hideFolder(path: String) { hiddenFolders = hiddenFolders + path; store.hiddenFolders = hiddenFolders; loadLibrary(silent = true) }
+    fun hideFolder(path: String) { hiddenFolders = hiddenFolders + path; store.hiddenFolders = hiddenFolders; loadLibrary(silent = true); showToast("Folder hidden. Show it again in Settings") }
     fun unhideFolder(path: String) { hiddenFolders = hiddenFolders - path; store.hiddenFolders = hiddenFolders; loadLibrary(silent = true) }
 
     fun addSearch(q: String) {
@@ -264,10 +267,12 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
         if (c.mediaItemCount == 0) { play(list); return }
         known.putAll(list.associateBy { it.id })
         c.addMediaItems(c.currentMediaItemIndex + 1, list.map(::toItem))
+        showToast("${list.size} songs will play next")
     }
     fun favoriteAll(list: List<MusicTrack>) {
         favorites = favorites + list.map { it.id }
         store.favorites = favorites
+        showToast("Added ${list.size} songs to favorites")
     }
 
     // ---------- backup / restore ----------
@@ -491,6 +496,7 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
         known[t.id] = t
         if (c.mediaItemCount == 0) { play(listOf(t)); return }
         c.addMediaItem(c.currentMediaItemIndex + 1, toItem(t))
+        showToast("Playing next")
     }
 
     fun addToQueue(t: MusicTrack) {
@@ -498,6 +504,7 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
         known[t.id] = t
         if (c.mediaItemCount == 0) { play(listOf(t)); return }
         c.addMediaItem(toItem(t))
+        showToast("Added to queue")
     }
 
     fun addAllToQueue(list: List<MusicTrack>) {
@@ -505,6 +512,7 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
         if (c.mediaItemCount == 0) { play(list); return }
         known.putAll(list.associateBy { it.id })
         c.addMediaItems(list.map(::toItem))
+        showToast("Added ${list.size} songs to queue")
     }
 
     fun removeFromQueue(index: Int) { controller?.let { if (index in 0 until it.mediaItemCount) it.removeMediaItem(index) } }
@@ -516,14 +524,17 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
     // ---------- favorites & playlists ----------
     fun isFavorite(id: Long) = id in favorites
     fun toggleFavorite(t: MusicTrack) {
-        favorites = if (t.id in favorites) favorites - t.id else favorites + t.id
+        val removing = t.id in favorites
+        favorites = if (removing) favorites - t.id else favorites + t.id
         store.favorites = favorites
+        showToast(if (removing) "Removed from favorites" else "Added to favorites")
     }
 
     fun createPlaylist(name: String, initial: List<MusicTrack> = emptyList()): Boolean {
         val n = name.trim()
         if (n.isEmpty() || playlists.keys.any { it.equals(n, true) }) return false
         savePlaylists(playlists + (n to initial.map { it.id }.distinct()))
+        showToast(if (initial.isEmpty()) "Playlist created" else "Saved to \"$n\"")
         return true
     }
 
@@ -540,6 +551,7 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
     fun addToPlaylist(name: String, list: List<MusicTrack>) {
         val cur = playlists[name] ?: return
         savePlaylists(playlists + (name to (cur + list.map { it.id }.filter { it !in cur }).distinct()))
+        showToast(if (list.size == 1) "Added to \"$name\"" else "Added ${list.size} songs to \"$name\"")
     }
 
     fun removeFromPlaylist(name: String, id: Long) {

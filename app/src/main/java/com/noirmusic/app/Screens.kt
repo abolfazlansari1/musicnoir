@@ -129,14 +129,18 @@ fun HomeScreen(state: LazyListState) {
         }
         item { HeroCard() }
         item {
-            Column(Modifier.padding(horizontal = 18.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    QuickTile("Shuffle all", "${vm.tracks.size} songs", Icons.Rounded.Shuffle, true, Modifier.weight(1f)) { vm.playShuffled(vm.sortedTracks) }
-                    QuickTile("Favorites", "${vm.favoriteTracks.size} songs", Icons.Rounded.Favorite, false, Modifier.weight(1f)) { ui.navigate(Route.Favorites) }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    QuickTile("Recently played", "${vm.recentTracks.size} songs", Icons.Rounded.History, false, Modifier.weight(1f)) { ui.navigate(Route.Recent) }
-                    QuickTile("Most played", "${vm.mostPlayed.size} songs", Icons.Rounded.TrendingUp, false, Modifier.weight(1f)) { ui.navigate(Route.MostPlayed) }
+            val tiles = buildList<@Composable (Modifier) -> Unit> {
+                add { m -> QuickTile("Shuffle all", "${vm.tracks.size} songs", Icons.Rounded.Shuffle, true, m) { vm.playShuffled(vm.sortedTracks) } }
+                if (vm.favoriteTracks.isNotEmpty()) add { m -> QuickTile("Favorites", "${vm.favoriteTracks.size} songs", Icons.Rounded.Favorite, false, m) { ui.navigate(Route.Favorites) } }
+                if (vm.recentTracks.isNotEmpty()) add { m -> QuickTile("Recently played", "${vm.recentTracks.size} songs", Icons.Rounded.History, false, m) { ui.navigate(Route.Recent) } }
+                if (vm.mostPlayed.isNotEmpty()) add { m -> QuickTile("Most played", "${vm.mostPlayed.size} songs", Icons.Rounded.TrendingUp, false, m) { ui.navigate(Route.MostPlayed) } }
+            }
+            Column(Modifier.padding(horizontal = 20.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                tiles.chunked(2).forEach { rowTiles ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        rowTiles.forEach { t -> t(Modifier.weight(1f)) }
+                        if (rowTiles.size == 1) Spacer(Modifier.weight(1f))
+                    }
                 }
             }
         }
@@ -215,7 +219,7 @@ private fun HeroCard() {
 private fun QuickTile(title: String, subtitle: String, icon: ImageVector, highlight: Boolean, modifier: Modifier, onClick: () -> Unit) {
     val bg = if (highlight) Modifier.background(Brush.linearGradient(listOf(N.accent, N.accent.copy(alpha = .55f)))) else Modifier.background(N.panel)
     val fg = if (highlight) N.onAccent else N.text
-    Row(modifier.clip(RoundedCornerShape(18.dp)).then(bg).bounceClick(onClick = onClick).padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier.clip(RoundedCornerShape(20.dp)).then(bg).hairline(RoundedCornerShape(20.dp)).bounceClick(onClick = onClick).padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(38.dp).clip(CircleShape).background(if (highlight) Color.White.copy(alpha = .25f) else N.panel2), contentAlignment = Alignment.Center) {
             Icon(icon, null, tint = if (highlight) N.onAccent else N.accent, modifier = Modifier.size(20.dp))
         }
@@ -255,7 +259,7 @@ fun LibraryScreen(states: ListStates, sub: Int, onSub: (Int) -> Unit) {
     val ui = LocalUi.current
     val labels = listOf("Songs", "Albums", "Artists", "Folders", "Playlists")
     Column(Modifier.fillMaxSize()) {
-        Text("Library", color = N.text, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(start = 18.dp, top = 14.dp, bottom = 10.dp))
+        ScreenTitle("Library")
         LazyRow(contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             itemsIndexed(labels) { i, l -> NoirChip(l, sub == i, { onSub(i) }) }
         }

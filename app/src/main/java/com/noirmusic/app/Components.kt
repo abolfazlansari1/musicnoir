@@ -21,6 +21,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -130,6 +131,17 @@ fun EqBars(color: Color, playing: Boolean, modifier: Modifier = Modifier.size(18
     }
 }
 
+fun Modifier.hairline(shape: androidx.compose.ui.graphics.Shape): Modifier =
+    this.border(1.dp, Color.White.copy(alpha = .07f), shape)
+
+@Composable
+fun ScreenTitle(title: String, modifier: Modifier = Modifier) {
+    Text(
+        title, color = N.text, fontSize = 32.sp, fontWeight = FontWeight.Bold, letterSpacing = (-.5).sp,
+        modifier = modifier.padding(start = 20.dp, top = 20.dp, bottom = 12.dp)
+    )
+}
+
 @Composable
 fun rememberHaptic(): () -> Unit {
     val vm = LocalVm.current
@@ -169,7 +181,7 @@ fun TrackRow(
         if (index != null) {
             Text("${index + 1}", color = N.muted, fontSize = 12.sp, modifier = Modifier.width(28.dp), textAlign = TextAlign.Center)
         }
-        Box(Modifier.size(52.dp)) {
+        Box(Modifier.size(56.dp)) {
             Artwork(track, Modifier.fillMaxSize(), px = 160, corner = 13.dp)
             if (selected) {
                 Box(Modifier.fillMaxSize().clip(RoundedCornerShape(13.dp)).background(N.accent.copy(alpha = .85f)), contentAlignment = Alignment.Center) {
