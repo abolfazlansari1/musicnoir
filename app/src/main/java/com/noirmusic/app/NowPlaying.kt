@@ -1,5 +1,11 @@
 package com.noirmusic.app
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
@@ -112,6 +118,12 @@ fun NowPlayingScreen(onClose: () -> Unit) {
         LaunchedEffect(Unit) { onClose() }
         return
     }
+    val view = LocalView.current
+    DisposableEffect(vm.keepScreenOn) {
+        view.keepScreenOn = vm.keepScreenOn
+        onDispose { view.keepScreenOn = false }
+    }
+    val haptic = rememberHaptic()
     val offsetY = remember { Animatable(0f) }
     var showLyrics by remember { mutableStateOf(false) }
     val tint by animateColorAsState(vm.artColor ?: N.accent.copy(alpha = .45f), tween(700), label = "tint")
@@ -156,13 +168,20 @@ fun NowPlayingScreen(onClose: () -> Unit) {
             Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 ControlIcon(Icons.Rounded.Shuffle, "Shuffle", vm.shuffle) { vm.toggleShuffle() }
                 Icon(Icons.Rounded.SkipPrevious, "Previous", tint = N.text, modifier = Modifier.size(44.dp).clip(CircleShape).bounceClick { vm.previous() }.padding(4.dp))
-                Box(Modifier.size(76.dp).clip(CircleShape).background(N.accent).bounceClick { vm.togglePlay() }, contentAlignment = Alignment.Center) {
+                Box(Modifier.size(76.dp).clip(CircleShape).background(N.accent).bounceClick { haptic(); vm.togglePlay() }, contentAlignment = Alignment.Center) {
                     PlayPauseIcon(vm.isPlaying, N.onAccent, Modifier.size(42.dp))
                 }
                 Icon(Icons.Rounded.SkipNext, "Next", tint = N.text, modifier = Modifier.size(44.dp).clip(CircleShape).bounceClick { vm.next() }.padding(4.dp))
                 ControlIcon(if (vm.repeat == Player.REPEAT_MODE_ONE) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat, "Repeat", vm.repeat != Player.REPEAT_MODE_OFF) { vm.cycleRepeat() }
             }
 
+            vm.upNext?.let { n ->
+                Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable { ui.showQueue() }.padding(horizontal = 8.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("UP NEXT", color = N.muted, fontSize = 10.sp, letterSpacing = 1.5.sp, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.width(10.dp))
+                    Text("${n.title} • ${n.artist}", color = N.text.copy(alpha = .8f), fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                }
+            }
             Row(Modifier.fillMaxWidth().padding(bottom = 6.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
                 ControlIcon(Icons.Rounded.Lyrics, "Lyrics", showLyrics) { showLyrics = !showLyrics }
                 ControlIcon(Icons.Rounded.Speed, "Speed and pitch", vm.speed != 1f || vm.pitch != 1f) { ui.showSpeed() }
@@ -228,6 +247,7 @@ private fun ArtworkPager(side: androidx.compose.ui.unit.Dp, modifier: Modifier) 
 private fun LyricsView(track: MusicTrack) {
     val vm = LocalVm.current
     LaunchedEffect(track.id) { vm.loadLyrics(track) }
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> if (uri != null) vm.importLyrics(track, uri) }
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         when (val s = vm.lyrics) {
             LyricsState.Idle, LyricsState.Loading -> CircularProgressIndicator(color = N.accent)
@@ -235,14 +255,16 @@ private fun LyricsView(track: MusicTrack) {
                 Text(s.text, color = N.text.copy(alpha = .8f), fontSize = 15.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                 Spacer(Modifier.height(14.dp))
                 Button(onClick = { vm.loadLyrics(track, true) }, colors = ButtonDefaults.buttonColors(containerColor = N.accent, contentColor = N.onAccent)) { Text("Try again", fontWeight = FontWeight.Bold) }
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(onClick = { picker.launch(arrayOf("*/*")) }) { Text("Import .lrc or .txt file", color = N.text) }
             }
-            is LyricsState.Loaded -> LyricsList(s)
+            is LyricsState.Loaded -> LyricsList(s) { picker.launch(arrayOf("*/*")) }
         }
     }
 }
 
 @Composable
-private fun LyricsList(s: LyricsState.Loaded) {
+private fun LyricsList(s: LyricsState.Loaded, onImport: () -> Unit) {
     val vm = LocalVm.current
     val listState = rememberLazyListState()
     val position = vm.position
@@ -263,7 +285,12 @@ private fun LyricsList(s: LyricsState.Loaded) {
                     .graphicsLayer { scaleX = sc; scaleY = sc; transformOrigin = TransformOrigin(0f, .5f) }
             )
         }
-        item { Text(if (s.synced) "Synced lyrics • tap a line to jump • ${s.source}" else "Plain lyrics • ${s.source}", color = N.muted, fontSize = 11.sp, modifier = Modifier.padding(top = 16.dp)) }
+        item {
+            Column(Modifier.padding(top = 16.dp)) {
+                Text(if (s.synced) "Synced lyrics • tap a line to jump • ${s.source}" else "Plain lyrics • ${s.source}", color = N.muted, fontSize = 11.sp)
+                Text("Import a different lyrics file", color = N.accent, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onImport).padding(vertical = 8.dp))
+            }
+        }
     }
 }
 

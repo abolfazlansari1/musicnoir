@@ -55,6 +55,16 @@ class Store(context: Context) {
     var speed: Float get() = sp.getFloat("speed", 1f); set(v) { sp.edit().putFloat("speed", v).apply() }
     var pitch: Float get() = sp.getFloat("pitch", 1f); set(v) { sp.edit().putFloat("pitch", v).apply() }
 
+    var keepScreenOn: Boolean get() = sp.getBoolean("keep_screen_on", false); set(v) { sp.edit().putBoolean("keep_screen_on", v).apply() }
+    var haptics: Boolean get() = sp.getBoolean("haptics", true); set(v) { sp.edit().putBoolean("haptics", v).apply() }
+    var startTab: Int get() = sp.getInt("start_tab", 0); set(v) { sp.edit().putInt("start_tab", v).apply() }
+    var hiddenFolders: Set<String>
+        get() = sp.getStringSet("hidden_folders", emptySet())?.toSet() ?: emptySet()
+        set(v) { sp.edit().putStringSet("hidden_folders", v).apply() }
+    var searchHistory: List<String>
+        get() = (sp.getString("search_history", "") ?: "").split("\n").filter { it.isNotBlank() }
+        set(v) { sp.edit().putString("search_history", v.joinToString("\n")).apply() }
+
     // last queue (written by the playback service)
     var lastQueue: List<Long> get() = idList("last_queue"); set(v) { sp.edit().putString("last_queue", v.joinToString(",")).apply() }
     var lastCurrentId: Long get() = sp.getLong("last_current", -1L); set(v) { sp.edit().putLong("last_current", v).apply() }

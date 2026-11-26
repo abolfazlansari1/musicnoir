@@ -1,6 +1,19 @@
 package com.noirmusic.app
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material.icons.rounded.VisibilityOff
+import kotlinx.coroutines.launch
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -114,6 +127,7 @@ fun HomeScreen(state: LazyListState) {
             item { EmptyState(title = "No music found", subtitle = "Add songs to this device, or lower the minimum duration in Settings.", actionLabel = "Rescan", onAction = { vm.loadLibrary() }) }
             return@LazyColumn
         }
+        item { HeroCard() }
         item {
             Column(Modifier.padding(horizontal = 18.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -155,6 +169,43 @@ fun HomeScreen(state: LazyListState) {
             val top = vm.mostPlayed.take(5)
             itemsIndexed(top, key = { _, t -> "m${t.id}" }) { i, t ->
                 TrackRow(t, t.id == currentId, vm.isPlaying, { vm.play(top, i) }, index = i)
+            }
+        }
+    }
+}
+
+@Composable
+private fun HeroCard() {
+    val vm = LocalVm.current
+    val ui = LocalUi.current
+    val ctx = LocalContext.current
+    val track = vm.current ?: vm.recentTracks.firstOrNull() ?: return
+    val isCurrent = vm.current?.id == track.id
+    val accent by produceState<Color?>(null, track.id) { value = ArtCache.accentFor(ctx, track) }
+    val tint by animateColorAsState(accent ?: N.panel2, tween(500), label = "herotint")
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 6.dp).clip(RoundedCornerShape(28.dp))
+            .background(Brush.linearGradient(listOf(tint, N.panel)))
+            .bounceClick { if (isCurrent) ui.openPlayer() else vm.play(vm.recentTracks, 0, false) }
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Artwork(track, Modifier.size(104.dp), px = 320, corner = 22.dp)
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            Text(if (isCurrent) "NOW PLAYING" else "CONTINUE LISTENING", color = N.text.copy(alpha = .7f), fontSize = 10.sp, letterSpacing = 2.sp, fontWeight = FontWeight.Bold)
+            Text(track.title, color = N.text, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
+            Text(track.artist, color = N.text.copy(alpha = .7f), fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(10.dp))
+            Row(
+                Modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = .94f))
+                    .bounceClick { if (isCurrent) vm.togglePlay() else vm.play(vm.recentTracks, 0, false) }
+                    .padding(horizontal = 14.dp, vertical = 7.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                PlayPauseIcon(isCurrent && vm.isPlaying, Color(0xFF14101C), Modifier.size(20.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(if (isCurrent && vm.isPlaying) "Pause" else "Play", color = Color(0xFF14101C), fontWeight = FontWeight.Bold, fontSize = 13.sp)
             }
         }
     }
@@ -252,9 +303,57 @@ private fun SongsTab(state: LazyListState) {
             }
         }
         PlayShuffleRow({ vm.play(songs, 0, false) }, { vm.playShuffled(songs) })
-        LazyColumn(state = state, contentPadding = PaddingValues(bottom = 16.dp)) {
-            itemsIndexed(songs, key = { _, t -> t.id }) { i, t ->
-                TrackRow(t, t.id == currentId, vm.isPlaying, { vm.play(songs, i, false) })
+        val letters = remember(songs, vm.sortKey) { if (vm.sortKey in 0..2 && songs.size > 40) buildLetters(songs, vm.sortKey) else emptyList() }
+        Box(Modifier.fillMaxSize()) {
+            LazyColumn(state = state, contentPadding = PaddingValues(bottom = 16.dp, end = if (letters.isEmpty()) 0.dp else 14.dp)) {
+                itemsIndexed(songs, key = { _, t -> t.id }) { i, t ->
+                    TrackRow(t, t.id == currentId, vm.isPlaying, { vm.play(songs, i, false) }, modifier = Modifier.animateItem())
+                }
+            }
+            if (letters.isNotEmpty()) FastScroller(letters, state, Modifier.align(Alignment.CenterEnd))
+        }
+    }
+}
+
+private fun buildLetters(songs: List<MusicTrack>, key: Int): List<Pair<Char, Int>> {
+    val out = LinkedHashMap<Char, Int>()
+    songs.forEachIndexed { i, t ->
+        val text = when (key) { 1 -> t.artist; 2 -> t.album; else -> t.title }
+        val c = PlayerViewModel.normalize(text).firstOrNull { it.isLetterOrDigit() }?.uppercaseChar()?.let { if (it.isDigit()) '#' else it } ?: '#'
+        out.putIfAbsent(c, i)
+    }
+    return out.map { it.key to it.value }
+}
+
+@Composable
+private fun FastScroller(letters: List<Pair<Char, Int>>, state: LazyListState, modifier: Modifier) {
+    val scope = rememberCoroutineScope()
+    var active by remember { mutableStateOf<Char?>(null) }
+    var height by remember { mutableIntStateOf(1) }
+    val shown = remember(letters) {
+        val step = ((letters.size + 17) / 18).coerceAtLeast(1)
+        letters.filterIndexed { i, _ -> i % step == 0 }
+    }
+    val pick: (Float) -> Unit = { y ->
+        val i = ((y / height) * letters.size).toInt().coerceIn(0, letters.lastIndex)
+        active = letters[i].first
+        scope.launch { state.scrollToItem(letters[i].second) }
+    }
+    Box(
+        modifier.fillMaxHeight().padding(vertical = 8.dp).width(26.dp).onSizeChanged { height = it.height.coerceAtLeast(1) }
+            .pointerInput(letters) { detectTapGestures(onPress = { o -> pick(o.y); tryAwaitRelease(); active = null }) }
+            .pointerInput(letters) {
+                detectVerticalDragGestures(onDragStart = { o -> pick(o.y) }, onDragEnd = { active = null }, onDragCancel = { active = null }) { c, _ ->
+                    c.consume(); pick(c.position.y)
+                }
+            }
+    ) {
+        Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly, horizontalAlignment = Alignment.CenterHorizontally) {
+            shown.forEach { (ch, _) -> Text(ch.toString(), fontSize = 9.sp, fontWeight = FontWeight.Bold, color = if (active == ch) N.accent else N.muted) }
+        }
+        active?.let {
+            Box(Modifier.align(Alignment.CenterStart).offset(x = (-72).dp).size(54.dp).clip(RoundedCornerShape(16.dp)).background(N.accent), contentAlignment = Alignment.Center) {
+                Text(it.toString(), color = N.onAccent, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
             }
         }
     }
@@ -306,6 +405,7 @@ private fun FoldersTab(state: LazyListState) {
                     Text(f.name, color = N.text, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text("${f.tracks.size} songs • ${f.path}", color = N.muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
+                IconButton(onClick = { vm.hideFolder(f.path) }) { Icon(Icons.Rounded.VisibilityOff, "Hide folder", tint = N.muted) }
             }
         }
     }
@@ -355,7 +455,15 @@ fun RouteScreen(route: Route) {
         }
         is Route.Artist -> {
             val a = vm.artists.firstOrNull { it.name == route.name }
-            if (a == null) MissingScreen("Artist") else CollectionScreen(a.name, "${a.tracks.size} songs • ${a.albumCount} albums", a.tracks, a.tracks.first(), round = true)
+            if (a == null) MissingScreen("Artist") else CollectionScreen(a.name, "${a.tracks.size} songs • ${a.albumCount} albums", a.tracks, a.tracks.first(), round = true, headerExtra = {
+                val albs = vm.albums.filter { al -> al.tracks.any { it.artist == a.name } }
+                if (albs.size > 1) {
+                    SectionHeader("Albums")
+                    LazyRow(contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                        items(albs, key = { it.id }) { al -> AlbumCard(al, Modifier.width(130.dp)) { ui.navigate(Route.Album(al.id)) } }
+                    }
+                }
+            })
         }
         is Route.Folder -> {
             val f = vm.folders.firstOrNull { it.path == route.path }
@@ -410,11 +518,16 @@ fun CollectionScreen(
     title: String, subtitle: String, tracks: List<MusicTrack>, cover: MusicTrack?,
     round: Boolean = false, showIndex: Boolean = false, emptyText: String = "No songs here.",
     actions: @Composable () -> Unit = {},
+    headerExtra: @Composable () -> Unit = {},
     trailing: ((MusicTrack) -> (@Composable () -> Unit))? = null
 ) {
     val vm = LocalVm.current
     val ui = LocalUi.current
+    val ctx = LocalContext.current
+    val accent by produceState<Color?>(null, cover?.id) { value = cover?.let { ArtCache.accentFor(ctx, it) } }
+    val tint by animateColorAsState((accent ?: N.panel2).copy(alpha = .6f), tween(600), label = "coltint")
     val currentId = vm.current?.id
+    Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colorStops = arrayOf(0f to tint, .5f to Color.Transparent)))) {
     Column(Modifier.fillMaxSize()) {
         TopBar("", ui.back) {
             if (tracks.isNotEmpty()) IconButton(onClick = { ui.addToPlaylist(tracks) }) { Icon(Icons.Rounded.QueueMusic, "Add all to playlist", tint = N.text) }
@@ -433,11 +546,13 @@ fun CollectionScreen(
                 item { EmptyState(title = "Nothing here yet", subtitle = emptyText) }
             } else {
                 item { Spacer(Modifier.height(8.dp)); PlayShuffleRow({ vm.play(tracks, 0, false) }, { vm.playShuffled(tracks) }) }
+                item { headerExtra() }
                 itemsIndexed(tracks, key = { i, t -> "${t.id}#$i" }) { i, t ->
-                    TrackRow(t, t.id == currentId, vm.isPlaying, { vm.play(tracks, i, false) }, index = if (showIndex) i else null, trailing = trailing?.invoke(t))
+                    TrackRow(t, t.id == currentId, vm.isPlaying, { vm.play(tracks, i, false) }, modifier = Modifier.animateItem(), index = if (showIndex) i else null, trailing = trailing?.invoke(t))
                 }
             }
         }
+    }
     }
 }
 

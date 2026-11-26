@@ -33,6 +33,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.net.Uri
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
 import java.io.IOException
 import java.text.Normalizer
@@ -58,6 +61,14 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
     var amoled by mutableStateOf(store.amoled); private set
     var minDurationSec by mutableIntStateOf(store.minDurationSec); private set
     var includeNonMusic by mutableStateOf(store.includeNonMusic); private set
+    var keepScreenOn by mutableStateOf(store.keepScreenOn); private set
+    var haptics by mutableStateOf(store.haptics); private set
+    var startTab by mutableIntStateOf(store.startTab); private set
+    var hiddenFolders by mutableStateOf(store.hiddenFolders); private set
+    var searchHistory by mutableStateOf(store.searchHistory); private set
+    var notice by mutableStateOf<String?>(null)
+    var selection by mutableStateOf<List<MusicTrack>>(emptyList()); private set
+    val selecting: Boolean get() = selection.isNotEmpty()
     var skipSilence by mutableStateOf(store.skipSilence); private set
     var sortKey by mutableIntStateOf(store.sortKey); private set
     var sortAsc by mutableStateOf(store.sortAsc); private set
@@ -90,6 +101,7 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
     var queue by mutableStateOf<List<MusicTrack>>(emptyList()); private set
     var queueIndex by mutableIntStateOf(-1); private set
     var artColor by mutableStateOf<Color?>(null); private set
+    var upNext by mutableStateOf<MusicTrack?>(null); private set
     private var artFor = -1L
     private var lastRecorded = -1L
     private var restored = false
@@ -176,6 +188,7 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
             if (!silent) loading = true
             val list = withContext(Dispatchers.IO) {
                 runCatching { repo.loadAudio(minDurationSec * 1000L, includeNonMusic) }.getOrDefault(emptyList())
+                    .filter { it.folder !in hiddenFolders }
             }
             applyLibrary(list)
             loading = false
@@ -221,6 +234,107 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
     fun chooseIncludeNonMusic(v: Boolean) { includeNonMusic = v; store.includeNonMusic = v; loadLibrary(silent = true) }
     fun setSort(key: Int, asc: Boolean) { sortKey = key; sortAsc = asc; store.sortKey = key; store.sortAsc = asc }
 
+    fun chooseKeepScreenOn(v: Boolean) { keepScreenOn = v; store.keepScreenOn = v }
+    fun chooseHaptics(v: Boolean) { haptics = v; store.haptics = v }
+    fun chooseStartTab(v: Int) { startTab = v; store.startTab = v }
+
+    fun hideFolder(path: String) { hiddenFolders = hiddenFolders + path; store.hiddenFolders = hiddenFolders; loadLibrary(silent = true) }
+    fun unhideFolder(path: String) { hiddenFolders = hiddenFolders - path; store.hiddenFolders = hiddenFolders; loadLibrary(silent = true) }
+
+    fun addSearch(q: String) {
+        val s = q.trim()
+        if (s.length < 2) return
+        searchHistory = (listOf(s) + searchHistory.filter { !it.equals(s, true) }).take(8)
+        store.searchHistory = searchHistory
+    }
+    fun clearSearchHistory() { searchHistory = emptyList(); store.searchHistory = emptyList() }
+
+    // ---------- multi-select ----------
+    fun toggleSelect(t: MusicTrack) {
+        selection = if (selection.any { it.id == t.id }) selection.filter { it.id != t.id } else selection + t
+    }
+    fun clearSelection() { selection = emptyList() }
+    fun selectAll(list: List<MusicTrack>) { selection = list }
+    fun playNextAll(list: List<MusicTrack>) {
+        val c = controller ?: return
+        if (c.mediaItemCount == 0) { play(list); return }
+        known.putAll(list.associateBy { it.id })
+        c.addMediaItems(c.currentMediaItemIndex + 1, list.map(::toItem))
+    }
+    fun favoriteAll(list: List<MusicTrack>) {
+        favorites = favorites + list.map { it.id }
+        store.favorites = favorites
+    }
+
+    // ---------- backup / restore ----------
+    fun exportBackup(uri: Uri) {
+        viewModelScope.launch {
+            val ok = withContext(Dispatchers.IO) {
+                runCatching {
+                    fun ref(id: Long): JSONObject? {
+                        val t = known[id] ?: return null
+                        return JSONObject().put("id", t.id).put("title", t.title).put("artist", t.artist)
+                    }
+                    val o = JSONObject().put("app", "NoirMusic").put("version", 1)
+                    o.put("favorites", JSONArray().also { a -> favorites.mapNotNull { ref(it) }.forEach { a.put(it) } })
+                    val pl = JSONObject()
+                    playlists.forEach { (n, ids) -> pl.put(n, JSONArray().also { a -> ids.mapNotNull { ref(it) }.forEach { a.put(it) } }) }
+                    o.put("playlists", pl)
+                    ctx.contentResolver.openOutputStream(uri, "wt")!!.use { it.write(o.toString(2).toByteArray()) }
+                }.isSuccess
+            }
+            notice = if (ok) "Backup saved" else "Backup failed"
+        }
+    }
+
+    fun importBackup(uri: Uri) {
+        viewModelScope.launch {
+            val text = withContext(Dispatchers.IO) {
+                runCatching { ctx.contentResolver.openInputStream(uri)!!.use { it.readBytes().toString(Charsets.UTF_8) } }.getOrNull()
+            }
+            if (text == null) { notice = "Could not read the file"; return@launch }
+            try {
+                val o = JSONObject(text)
+                val byKey = tracks.associateBy { normalize(it.title) + "|" + normalize(it.artist) }
+                fun resolve(r: JSONObject): Long? {
+                    val id = r.optLong("id", -1)
+                    val direct = byId[id]
+                    if (direct != null && normalize(direct.title) == normalize(r.optString("title"))) return id
+                    return byKey[normalize(r.optString("title")) + "|" + normalize(r.optString("artist"))]?.id
+                }
+                val favs = favorites.toMutableSet()
+                o.optJSONArray("favorites")?.let { a -> for (i in 0 until a.length()) resolve(a.getJSONObject(i))?.let { favs.add(it) } }
+                val pls = playlists.toMutableMap()
+                o.optJSONObject("playlists")?.let { po ->
+                    for (name in po.keys()) {
+                        val a = po.getJSONArray(name)
+                        val cur = pls[name].orEmpty().toMutableList()
+                        for (i in 0 until a.length()) resolve(a.getJSONObject(i))?.let { if (it !in cur) cur.add(it) }
+                        pls[name] = cur
+                    }
+                }
+                favorites = favs; store.favorites = favs
+                savePlaylists(pls)
+                notice = "Backup restored"
+            } catch (_: Exception) {
+                notice = "This is not a valid backup file"
+            }
+        }
+    }
+
+    fun importLyrics(t: MusicTrack, uri: Uri) {
+        viewModelScope.launch {
+            val text = withContext(Dispatchers.IO) {
+                runCatching { ctx.contentResolver.openInputStream(uri)!!.use { it.readBytes() }.toString(Charsets.UTF_8).removePrefix("\uFEFF") }.getOrNull()
+            }
+            if (text.isNullOrBlank()) { lyrics = LyricsState.Message("That file could not be read."); return@launch }
+            val synced = Regex("\\[\\d{1,3}:\\d{2}").containsMatchIn(text)
+            Lyrics.writeCache(File(ctx.filesDir, "lyrics"), t.id, Lyrics.Found(synced, text))
+            lyricsFor = -1L
+            loadLyrics(t)
+        }
+    }
+
     fun clearHistory() {
         recents = emptyList(); playCounts = emptyMap()
         store.recents = emptyList(); store.playCounts = emptyMap()
@@ -254,6 +368,8 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
             if (now != null) updateArtColor(now) else artColor = null
         }
         duration = if (c.duration > 0) c.duration else (current?.duration ?: 0L)
+        val ni = c.nextMediaItemIndex
+        upNext = if (ni in 0 until c.mediaItemCount) known[c.getMediaItemAt(ni).mediaId.toLongOrNull()] else null
     }
 
     private fun updateArtColor(t: MusicTrack) {
@@ -286,7 +402,7 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
     private fun toItem(t: MusicTrack): MediaItem {
         val meta = MediaMetadata.Builder().setTitle(t.title).setArtist(t.artist).setAlbumTitle(t.album)
             .setIsPlayable(true).setIsBrowsable(false)
-            .apply { t.artworkUri?.let { setArtworkUri(it) } }.build()
+            .setArtworkUri(ArtProvider.uriFor(t)).build()
         return MediaItem.Builder().setUri(t.uri).setMediaId(t.id.toString()).setMediaMetadata(meta).build()
     }
 

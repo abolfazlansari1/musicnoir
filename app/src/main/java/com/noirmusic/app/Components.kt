@@ -22,6 +22,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -40,7 +41,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AddToQueue
 import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.PlaylistAdd
+import androidx.compose.material.icons.rounded.PlaylistPlay
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.LibraryMusic
@@ -72,7 +78,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -123,6 +131,14 @@ fun EqBars(color: Color, playing: Boolean, modifier: Modifier = Modifier.size(18
 }
 
 @Composable
+fun rememberHaptic(): () -> Unit {
+    val vm = LocalVm.current
+    val h = LocalHapticFeedback.current
+    return remember(vm.haptics, h) { { if (vm.haptics) h.performHapticFeedback(HapticFeedbackType.LongPress) } }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
 fun TrackRow(
     track: MusicTrack,
     isCurrent: Boolean,
@@ -130,14 +146,24 @@ fun TrackRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     index: Int? = null,
+    selectable: Boolean = true,
     trailing: (@Composable () -> Unit)? = null
 ) {
+    val vm = LocalVm.current
     val ui = LocalUi.current
-    val bg by animateColorAsState(if (isCurrent) N.accent.copy(alpha = .13f) else Color.Transparent, label = "rowbg")
+    val haptic = rememberHaptic()
+    val selected = selectable && vm.selection.any { it.id == track.id }
+    val bg by animateColorAsState(
+        when { selected -> N.accent.copy(alpha = .24f); isCurrent -> N.accent.copy(alpha = .13f); else -> Color.Transparent }, label = "rowbg"
+    )
     Row(
         modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 1.dp)
             .clip(RoundedCornerShape(16.dp)).background(bg)
-            .clickable(onClick = onClick).padding(horizontal = 8.dp, vertical = 6.dp),
+            .combinedClickable(
+                onClick = { if (selectable && vm.selecting) vm.toggleSelect(track) else onClick() },
+                onLongClick = if (selectable) ({ haptic(); vm.toggleSelect(track) }) else null
+            )
+            .padding(horizontal = 8.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (index != null) {
@@ -145,7 +171,11 @@ fun TrackRow(
         }
         Box(Modifier.size(52.dp)) {
             Artwork(track, Modifier.fillMaxSize(), px = 160, corner = 13.dp)
-            if (isCurrent) {
+            if (selected) {
+                Box(Modifier.fillMaxSize().clip(RoundedCornerShape(13.dp)).background(N.accent.copy(alpha = .85f)), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Rounded.Check, null, tint = N.onAccent, modifier = Modifier.size(26.dp))
+                }
+            } else if (isCurrent) {
                 Box(Modifier.fillMaxSize().clip(RoundedCornerShape(13.dp)).background(Color.Black.copy(alpha = .45f)), contentAlignment = Alignment.Center) {
                     EqBars(N.accentSoft, isPlaying, Modifier.size(20.dp))
                 }
@@ -157,6 +187,26 @@ fun TrackRow(
             Text("${track.artist}  •  ${formatTime(track.duration)}", color = N.muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         if (trailing != null) trailing() else IconButton(onClick = { ui.menu(track) }) { Icon(Icons.Rounded.MoreVert, "More", tint = N.muted) }
+    }
+}
+
+@Composable
+fun SelectionBar(modifier: Modifier = Modifier) {
+    val vm = LocalVm.current
+    val ui = LocalUi.current
+    val sel = vm.selection
+    Row(
+        modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp).clip(RoundedCornerShape(22.dp))
+            .background(N.panel2).padding(horizontal = 6.dp, vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = { vm.clearSelection() }) { Icon(Icons.Rounded.Close, "Cancel selection", tint = N.text) }
+        Text("${sel.size} selected", color = N.text, fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.weight(1f))
+        IconButton(onClick = { vm.play(sel, 0, false); vm.clearSelection() }) { Icon(Icons.Rounded.PlayArrow, "Play", tint = N.accent) }
+        IconButton(onClick = { vm.playNextAll(sel); vm.clearSelection() }) { Icon(Icons.Rounded.PlaylistPlay, "Play next", tint = N.text) }
+        IconButton(onClick = { vm.addAllToQueue(sel); vm.clearSelection() }) { Icon(Icons.Rounded.AddToQueue, "Add to queue", tint = N.text) }
+        IconButton(onClick = { ui.addToPlaylist(sel); vm.clearSelection() }) { Icon(Icons.Rounded.PlaylistAdd, "Add to playlist", tint = N.text) }
+        IconButton(onClick = { vm.favoriteAll(sel); vm.clearSelection() }) { Icon(Icons.Rounded.Favorite, "Favorite", tint = N.text) }
     }
 }
 

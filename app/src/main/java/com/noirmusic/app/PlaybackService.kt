@@ -59,7 +59,6 @@ class PlaybackService : MediaSessionService() {
             }
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                if (mediaItem != null) embedArtwork(mediaItem)
                 saveState()
             }
 
@@ -94,28 +93,6 @@ class PlaybackService : MediaSessionService() {
         store.lastQueue = ids
         store.lastCurrentId = p.currentMediaItem?.mediaId?.toLongOrNull() ?: -1L
         store.lastPosition = p.currentPosition.coerceAtLeast(0)
-    }
-
-    /** Puts artwork bytes into the current item so the notification and lock screen show it on every Android version. */
-    private fun embedArtwork(item: MediaItem) {
-        if (item.mediaMetadata.artworkData != null) return
-        val id = item.mediaId.toLongOrNull() ?: return
-        val uri = item.localConfiguration?.uri ?: return
-        scope.launch {
-            val bytes = ArtCache.jpeg(this@PlaybackService, id, uri, item.mediaMetadata.artworkUri) ?: return@launch
-            val p = player ?: return@launch
-            for (i in 0 until p.mediaItemCount) {
-                val cur = p.getMediaItemAt(i)
-                if (cur.mediaId == item.mediaId) {
-                    if (cur.mediaMetadata.artworkData == null) {
-                        val meta = cur.mediaMetadata.buildUpon()
-                            .setArtworkData(bytes, MediaMetadata.PICTURE_TYPE_FRONT_COVER).build()
-                        p.replaceMediaItem(i, cur.buildUpon().setMediaMetadata(meta).build())
-                    }
-                    break
-                }
-            }
-        }
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session

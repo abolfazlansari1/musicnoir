@@ -195,6 +195,7 @@ fun QueueSheet(onDismiss: () -> Unit) {
     val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val state = rememberLazyListState()
     LaunchedEffect(Unit) { if (vm.queueIndex > 2) state.scrollToItem(vm.queueIndex - 2) }
+    var saving by remember { mutableStateOf(false) }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheet, containerColor = N.panel) {
         Column(Modifier.fillMaxWidth().fillMaxHeight(.85f).navigationBarsPadding()) {
             Row(Modifier.fillMaxWidth().padding(start = 22.dp, end = 10.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -202,6 +203,7 @@ fun QueueSheet(onDismiss: () -> Unit) {
                     Text("Queue", color = N.text, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
                     Text("${vm.queue.size} songs", color = N.muted, fontSize = 12.sp)
                 }
+                TextButton(onClick = { saving = true }, enabled = vm.queue.isNotEmpty()) { Text("Save", color = if (vm.queue.isNotEmpty()) N.accent else N.muted) }
                 TextButton(onClick = { vm.clearUpcoming() }, enabled = vm.queueIndex < vm.queue.lastIndex) { Text("Clear upcoming", color = if (vm.queueIndex < vm.queue.lastIndex) N.accent else N.muted) }
             }
             if (vm.queue.isEmpty()) {
@@ -210,7 +212,7 @@ fun QueueSheet(onDismiss: () -> Unit) {
                 itemsIndexed(vm.queue, key = { i, t -> "${t.id}#$i" }) { i, t ->
                     val isCurrent = i == vm.queueIndex
                     TrackRow(
-                        t, isCurrent, vm.isPlaying, { vm.skipTo(i) },
+                        t, isCurrent, vm.isPlaying, { vm.skipTo(i) }, modifier = Modifier.animateItem(), selectable = false,
                         trailing = {
                             Row {
                                 IconButton(onClick = { vm.moveInQueue(i, i - 1) }, enabled = i > 0, modifier = Modifier.size(34.dp)) { Icon(Icons.Rounded.ArrowUpward, "Move up", tint = if (i > 0) N.muted else N.panel2, modifier = Modifier.size(18.dp)) }
@@ -223,6 +225,7 @@ fun QueueSheet(onDismiss: () -> Unit) {
             }
         }
     }
+    if (saving) TextInputDialog("Save queue as playlist", "", "Save", "Playlist name", { vm.createPlaylist(it, vm.queue) }, { saving = false })
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)

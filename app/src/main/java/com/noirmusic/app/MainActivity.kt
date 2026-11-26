@@ -84,7 +84,7 @@ private data class Nav(val route: Route?, val depth: Int)
 @Composable
 private fun NoirRoot(vm: PlayerViewModel) {
     val ctx = LocalContext.current
-    var tab by rememberSaveable { mutableIntStateOf(0) }
+    var tab by rememberSaveable { mutableIntStateOf(vm.startTab) }
     var librarySub by rememberSaveable { mutableIntStateOf(0) }
     val stack = remember { mutableStateListOf<Route>() }
     val states = remember { ListStates() }
@@ -123,8 +123,8 @@ private fun NoirRoot(vm: PlayerViewModel) {
 
     val ui = remember {
         UiActions(
-            navigate = { r -> expanded = false; stack.add(r) },
-            back = { if (stack.isNotEmpty()) stack.removeAt(stack.lastIndex) },
+            navigate = { r -> expanded = false; vm.clearSelection(); stack.add(r) },
+            back = { vm.clearSelection(); if (stack.isNotEmpty()) stack.removeAt(stack.lastIndex) },
             openPlayer = { expanded = true },
             menu = { menuTrack = it },
             addToPlaylist = { playlistTargets = it },
@@ -138,6 +138,7 @@ private fun NoirRoot(vm: PlayerViewModel) {
     BackHandler(enabled = expanded) { expanded = false }
     BackHandler(enabled = !expanded && stack.isNotEmpty()) { stack.removeAt(stack.lastIndex) }
     BackHandler(enabled = !expanded && stack.isEmpty() && tab != 0) { tab = 0 }
+    BackHandler(enabled = vm.selecting && !expanded) { vm.clearSelection() }
 
     CompositionLocalProvider(LocalVm provides vm, LocalUi provides ui) {
         Box(Modifier.fillMaxSize().background(N.bg)) {
@@ -145,12 +146,13 @@ private fun NoirRoot(vm: PlayerViewModel) {
                 containerColor = N.bg,
                 bottomBar = {
                     Column {
+                        AnimatedVisibility(visible = vm.selecting, enter = slideInVertically { it } + fadeIn(), exit = slideOutVertically { it } + fadeOut()) { SelectionBar() }
                         AnimatedVisibility(
-                            visible = vm.current != null,
+                            visible = vm.current != null && !vm.selecting,
                             enter = slideInVertically(tween(320, easing = FastOutSlowInEasing)) { it } + fadeIn() + expandVertically(),
                             exit = slideOutVertically { it } + fadeOut() + shrinkVertically()
                         ) { MiniPlayer(onOpen = { expanded = true }) }
-                        NoirNavBar(tab, stack.isEmpty()) { i -> stack.clear(); tab = i }
+                        NoirNavBar(tab, stack.isEmpty()) { i -> vm.clearSelection(); stack.clear(); tab = i }
                     }
                 }
             ) { pad ->

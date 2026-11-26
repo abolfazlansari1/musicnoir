@@ -1,6 +1,13 @@
 package com.noirmusic.app
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.material.icons.rounded.History
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -107,7 +114,7 @@ fun SearchScreen(state: LazyListState) {
             trailingIcon = { if (query.isNotEmpty()) IconButton(onClick = { query = "" }) { Icon(Icons.Rounded.Close, "Clear", tint = N.muted) } },
             singleLine = true, shape = RoundedCornerShape(18.dp),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
+            keyboardActions = KeyboardActions(onSearch = { keyboard?.hide(); vm.addSearch(query) }),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = N.accent, unfocusedBorderColor = Color(0xFF3A3047),
                 focusedContainerColor = N.panel, unfocusedContainerColor = N.panel, cursorColor = N.accent,
@@ -116,7 +123,20 @@ fun SearchScreen(state: LazyListState) {
         )
         Spacer(Modifier.height(10.dp))
         when {
-            q.isEmpty() -> EmptyState(icon = Icons.Rounded.Search, title = "Search your library", subtitle = "Type a song, artist or album name. Persian and Arabic letters match each other.")
+            q.isEmpty() && vm.searchHistory.isEmpty() -> EmptyState(icon = Icons.Rounded.Search, title = "Search your library", subtitle = "Type a song, artist or album name. Persian and Arabic letters match each other.")
+            q.isEmpty() -> Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Recent searches", color = N.text, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.weight(1f))
+                    TextButton(onClick = { vm.clearSearchHistory() }) { Text("Clear", color = N.accent) }
+                }
+                vm.searchHistory.forEach { h ->
+                    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { query = h }.padding(vertical = 12.dp, horizontal = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Rounded.History, null, tint = N.muted, modifier = Modifier.size(20.dp))
+                        Spacer(Modifier.width(14.dp))
+                        Text(h, color = N.text, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                }
+            }
             songs.isEmpty() && albums.isEmpty() && artists.isEmpty() -> EmptyState(icon = Icons.Rounded.Search, title = "No results", subtitle = "Nothing matches \"$query\".")
             else -> LazyColumn(state = state, contentPadding = PaddingValues(bottom = 16.dp)) {
                 if (artists.isNotEmpty()) {
@@ -143,7 +163,7 @@ fun SearchScreen(state: LazyListState) {
                 if (songs.isNotEmpty()) {
                     item { SectionHeader("Songs (${songs.size})") }
                     itemsIndexed(songs, key = { _, t -> t.id }) { i, t ->
-                        TrackRow(t, t.id == currentId, vm.isPlaying, { keyboard?.hide(); vm.play(songs, i, false) })
+                        TrackRow(t, t.id == currentId, vm.isPlaying, { keyboard?.hide(); vm.addSearch(query); vm.play(songs, i, false) })
                     }
                 }
             }
@@ -191,6 +211,8 @@ fun SettingsScreen(state: LazyListState) {
     val remaining by SleepTimer.remainingSec.collectAsState()
     val endOfTrack by SleepTimer.endOfTrack.collectAsState()
     var cleared by remember { mutableStateOf<String?>(null) }
+    val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri -> if (uri != null) vm.exportBackup(uri) }
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> if (uri != null) vm.importBackup(uri) }
     val version = remember { runCatching { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName }.getOrNull() ?: "" }
     LazyColumn(state = state, contentPadding = PaddingValues(bottom = 20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item { Text("Settings", color = N.text, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(start = 18.dp, top = 14.dp)) }
@@ -210,6 +232,16 @@ fun SettingsScreen(state: LazyListState) {
                     }
                 }
                 SettingRow("Pure black background", "Saves battery on OLED screens") { NoirSwitch(vm.amoled) { vm.chooseAmoled(it) } }
+            }
+        }
+        item {
+            SettingsCard("Behavior") {
+                SettingRow("Open the app on") {}
+                Row(Modifier.padding(horizontal = 16.dp, vertical = 2.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("Home", "Library").forEachIndexed { i, label -> NoirChip(label, vm.startTab == i, { vm.chooseStartTab(i) }) }
+                }
+                SettingRow("Keep screen on in player", "Stops the display from turning off while Now Playing is open") { NoirSwitch(vm.keepScreenOn) { vm.chooseKeepScreenOn(it) } }
+                SettingRow("Haptic feedback", "Short vibration on long-press and play/pause") { NoirSwitch(vm.haptics) { vm.chooseHaptics(it) } }
             }
         }
         item {
@@ -234,10 +266,18 @@ fun SettingsScreen(state: LazyListState) {
                 }
                 SettingRow("Include non-music audio", "Voice notes, recordings and similar files") { NoirSwitch(vm.includeNonMusic) { vm.chooseIncludeNonMusic(it) } }
                 SettingRow("Rescan library", "${vm.tracks.size} songs • ${vm.albums.size} albums • ${vm.artists.size} artists", onClick = { vm.loadLibrary() })
+                vm.hiddenFolders.sorted().forEach { path ->
+                    SettingRow("Hidden: ${path.substringAfterLast('/').ifBlank { path }}", path) {
+                        TextButton(onClick = { vm.unhideFolder(path) }) { Text("Show", color = N.accent, fontWeight = FontWeight.Bold) }
+                    }
+                }
             }
         }
         item {
             SettingsCard("Data") {
+                SettingRow("Back up favorites and playlists", "Saves a file you can restore after reinstalling", onClick = { exportLauncher.launch("noir-music-backup.json") })
+                SettingRow("Restore from backup", "Merges favorites and playlists from a backup file", onClick = { importLauncher.launch(arrayOf("*/*")) })
+                vm.notice?.let { Text(it, color = N.accent, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) }
                 SettingRow("Clear play history", "Recently played and most played lists", onClick = { vm.clearHistory(); cleared = "Play history cleared" })
                 SettingRow("Clear saved lyrics", "Downloaded lyrics are re-fetched when needed", onClick = { vm.clearLyricsCache(); cleared = "Saved lyrics cleared" })
                 cleared?.let { Text(it, color = N.accent, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) }
@@ -280,6 +320,8 @@ fun EqualizerScreen(onBack: () -> Unit) {
         if (fx.available) {
             item {
                 Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp).clip(RoundedCornerShape(20.dp)).background(N.panel).padding(vertical = 16.dp, horizontal = 8.dp)) {
+                    EqCurve(fx.levels, fx.minLevel, fx.maxLevel, fx.enabled)
+                    Spacer(Modifier.height(10.dp))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                         fx.levels.forEachIndexed { i, level ->
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -346,5 +388,25 @@ private fun BandSlider(level: Int, min: Int, max: Int, enabled: Boolean, onChang
         drawRoundRect(fill, Offset(x, minOf(thumbY, zeroY)), Size(w, kotlin.math.abs(thumbY - zeroY)), CornerRadius(w / 2))
         drawRect(Color.White.copy(alpha = .25f), Offset(x - 5.dp.toPx(), zeroY - 0.5f), Size(w + 10.dp.toPx(), 1.dp.toPx()))
         drawCircle(Color.White, 9.dp.toPx(), Offset(size.width / 2, thumbY))
+    }
+}
+
+@Composable
+private fun EqCurve(levels: List<Int>, min: Int, max: Int, enabled: Boolean) {
+    val color by animateColorAsState(if (enabled) N.accent else N.muted, label = "curve")
+    Canvas(Modifier.fillMaxWidth().height(70.dp).padding(horizontal = 20.dp)) {
+        if (levels.size < 2) return@Canvas
+        val span = (max - min).coerceAtLeast(1).toFloat()
+        val pts = levels.mapIndexed { i, l -> Offset(size.width * i / (levels.size - 1), size.height * (1f - (l - min) / span)) }
+        val path = Path().apply {
+            moveTo(pts[0].x, pts[0].y)
+            for (i in 1 until pts.size) {
+                val mx = (pts[i - 1].x + pts[i].x) / 2
+                cubicTo(mx, pts[i - 1].y, mx, pts[i].y, pts[i].x, pts[i].y)
+            }
+        }
+        val fill = Path().apply { addPath(path); lineTo(size.width, size.height); lineTo(0f, size.height); close() }
+        drawPath(fill, Brush.verticalGradient(listOf(color.copy(alpha = .35f), Color.Transparent)))
+        drawPath(path, color, style = Stroke(3.dp.toPx(), cap = StrokeCap.Round))
     }
 }

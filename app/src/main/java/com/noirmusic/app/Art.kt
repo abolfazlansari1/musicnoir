@@ -54,12 +54,12 @@ object ArtCache {
         val k = key(id, px)
         cache.get(k)?.let { return@withContext it }
         if (k in misses) return@withContext null
-        val bmp = decode(ctx, uri, artUri, px)
+        val bmp = decodeSync(ctx, uri, artUri, px)
         if (bmp != null) cache.put(k, bmp) else misses.add(k)
         bmp
     }
 
-    private fun decode(ctx: Context, uri: Uri, artUri: Uri?, px: Int): Bitmap? {
+    fun decodeSync(ctx: Context, uri: Uri, artUri: Uri?, px: Int): Bitmap? {
         if (Build.VERSION.SDK_INT >= 29) {
             try { return ctx.contentResolver.loadThumbnail(uri, Size(px, px), null) } catch (_: Exception) {}
         }
