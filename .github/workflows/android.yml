@@ -23,19 +23,19 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 8.9
-      - name: Build debug APK
-        run: gradle --no-daemon assembleDebug
+      - name: Build APK
+        run: gradle --no-daemon assembleRelease
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Noir-Music-debug
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: Noir-Music
+          path: app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
       - name: Publish release
         if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk Noir-Music-debug.apk
+          cp app/build/outputs/apk/release/app-release.apk Noir-Music.apk
           gh release delete latest --yes --cleanup-tag || true
-          gh release create latest Noir-Music-debug.apk --title "Noir Music (latest debug build)" --notes "Debug APK built from commit ${GITHUB_SHA}" --target "${GITHUB_SHA}"
+          gh release create latest Noir-Music.apk --title "Noir Music (latest build)" --notes "APK built from commit ${GITHUB_SHA}. Signed with a fixed key, so it installs over the previous version." --target "${GITHUB_SHA}"
