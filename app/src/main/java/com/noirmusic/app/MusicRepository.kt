@@ -5,6 +5,7 @@ import android.content.Context
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
+import android.provider.MediaStore.Audio.Media as A
 
 class MusicRepository(private val context: Context) {
     private val albumArtBase = Uri.parse("content://media/external/audio/albumart")
@@ -12,9 +13,8 @@ class MusicRepository(private val context: Context) {
     fun loadAudio(minDurationMs: Long, includeNonMusic: Boolean): List<MusicTrack> {
         val result = ArrayList<MusicTrack>()
         val collection = if (Build.VERSION.SDK_INT >= 29)
-            MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
-        else MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
-        val A = MediaStore.Audio.Media
+            A.getContentUri(MediaStore.VOLUME_EXTERNAL)
+        else A.EXTERNAL_CONTENT_URI
         val projection = mutableListOf(
             A._ID, A.TITLE, A.ARTIST, A.ALBUM, A.DURATION, A.ALBUM_ID,
             A.DATE_ADDED, A.TRACK, A.YEAR, A.SIZE, A.MIME_TYPE
