@@ -214,11 +214,11 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     // ---------- settings ----------
-    fun setAccent(i: Int) { accent = i; store.accent = i }
-    fun setAmoled(v: Boolean) { amoled = v; store.amoled = v }
-    fun setSkipSilence(v: Boolean) { skipSilence = v; store.skipSilence = v }
+    fun chooseAccent(i: Int) { accent = i; store.accent = i }
+    fun chooseAmoled(v: Boolean) { amoled = v; store.amoled = v }
+    fun chooseSkipSilence(v: Boolean) { skipSilence = v; store.skipSilence = v }
     fun setMinDuration(sec: Int) { minDurationSec = sec; store.minDurationSec = sec; loadLibrary(silent = true) }
-    fun setIncludeNonMusic(v: Boolean) { includeNonMusic = v; store.includeNonMusic = v; loadLibrary(silent = true) }
+    fun chooseIncludeNonMusic(v: Boolean) { includeNonMusic = v; store.includeNonMusic = v; loadLibrary(silent = true) }
     fun setSort(key: Int, asc: Boolean) { sortKey = key; sortAsc = asc; store.sortKey = key; store.sortAsc = asc }
 
     fun clearHistory() {

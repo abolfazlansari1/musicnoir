@@ -204,12 +204,12 @@ fun SettingsScreen(state: LazyListState) {
                         Box(
                             Modifier.size(38.dp).scale(scale).clip(CircleShape).background(color)
                                 .then(if (sel) Modifier.border(3.dp, Color.White, CircleShape) else Modifier)
-                                .clickable { vm.setAccent(i) },
+                                .clickable { vm.chooseAccent(i) },
                             contentAlignment = Alignment.Center
                         ) { if (sel) Icon(Icons.Rounded.Check, name, tint = Color.Black.copy(alpha = .75f), modifier = Modifier.size(20.dp)) }
                     }
                 }
-                SettingRow("Pure black background", "Saves battery on OLED screens") { NoirSwitch(vm.amoled) { vm.setAmoled(it) } }
+                SettingRow("Pure black background", "Saves battery on OLED screens") { NoirSwitch(vm.amoled) { vm.chooseAmoled(it) } }
             }
         }
         item {
@@ -220,7 +220,7 @@ fun SettingsScreen(state: LazyListState) {
                     onClick = ui.showSleep
                 ) { Icon(Icons.Rounded.Timer, null, tint = N.accent) }
                 SettingRow("Speed and pitch", "Speed ${"%.2f".format(Locale.US, vm.speed)}x  •  Pitch ${"%.2f".format(Locale.US, vm.pitch)}x", onClick = ui.showSpeed) { Icon(Icons.Rounded.Speed, null, tint = N.accent) }
-                SettingRow("Skip silence", "Jump over silent parts of tracks") { NoirSwitch(vm.skipSilence) { vm.setSkipSilence(it) } }
+                SettingRow("Skip silence", "Jump over silent parts of tracks") { NoirSwitch(vm.skipSilence) { vm.chooseSkipSilence(it) } }
                 SettingRow("Equalizer", "Presets, bands, bass boost, virtualizer", onClick = { ui.navigate(Route.Equalizer) }) { Icon(Icons.Rounded.ChevronRight, null, tint = N.muted) }
             }
         }
@@ -232,7 +232,7 @@ fun SettingsScreen(state: LazyListState) {
                         NoirChip(label, vm.minDurationSec == sec, { vm.setMinDuration(sec) })
                     }
                 }
-                SettingRow("Include non-music audio", "Voice notes, recordings and similar files") { NoirSwitch(vm.includeNonMusic) { vm.setIncludeNonMusic(it) } }
+                SettingRow("Include non-music audio", "Voice notes, recordings and similar files") { NoirSwitch(vm.includeNonMusic) { vm.chooseIncludeNonMusic(it) } }
                 SettingRow("Rescan library", "${vm.tracks.size} songs • ${vm.albums.size} albums • ${vm.artists.size} artists", onClick = { vm.loadLibrary() })
             }
         }
