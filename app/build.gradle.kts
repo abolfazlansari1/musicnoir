@@ -14,7 +14,7 @@ android {
         targetSdk = 35
         // CI run number keeps versionCode increasing so every build installs as an update.
         versionCode = (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0) + 100
-        versionName = "3.7.0"
+        versionName = "3.8.0"
     }
 
     // One fixed key for every build, so a new APK always updates the installed one in place.

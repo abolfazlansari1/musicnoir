@@ -324,15 +324,27 @@ fun MiniPlayer(onOpen: () -> Unit) {
     val scope = rememberCoroutineScope()
     var dx by remember { mutableFloatStateOf(0f) }
     var dy by remember { mutableFloatStateOf(0f) }
-    val shape = RoundedCornerShape(24.dp)
+    var angle by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(vm.isPlaying) {
+        if (vm.isPlaying) {
+            var last = 0L
+            while (true) {
+                androidx.compose.runtime.withFrameNanos { t ->
+                    if (last != 0L) angle = (angle + (t - last) / 1_000_000_000f * 28f) % 360f
+                    last = t
+                }
+            }
+        }
+    }
+    val shape = RoundedCornerShape(40.dp)
     Box(
         Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)
             .offset { IntOffset(x.value.roundToInt(), 0) }
             .graphicsLayer { alpha = 1f - (kotlin.math.abs(x.value) / 700f).coerceIn(0f, .5f) }
-            .shadow(14.dp, shape, ambientColor = tint, spotColor = tint)
+            .shadow(16.dp, shape, ambientColor = tint, spotColor = tint)
             .clip(shape).background(N.panel2)
-            .background(Brush.horizontalGradient(listOf(tint.copy(alpha = .55f), tint.copy(alpha = .12f))))
-            .border(1.dp, Color.White.copy(alpha = .09f), shape)
+            .background(Brush.horizontalGradient(listOf(androidx.compose.ui.graphics.lerp(tint, Color.White, .10f), androidx.compose.ui.graphics.lerp(tint, N.bg, .30f))))
+            .border(1.dp, Brush.verticalGradient(listOf(Color.White.copy(alpha = .24f), Color.White.copy(alpha = .05f))), shape)
             .pointerInput(Unit) {
                 detectDragGestures(
                     onDragStart = { dx = 0f; dy = 0f },
@@ -349,29 +361,25 @@ fun MiniPlayer(onOpen: () -> Unit) {
             }
             .clickable(onClick = onOpen)
     ) {
-        Row(Modifier.padding(start = 10.dp, end = 6.dp, top = 9.dp, bottom = 9.dp), verticalAlignment = Alignment.CenterVertically) {
-            Artwork(track, Modifier.size(50.dp), px = 160, corner = 15.dp)
+        Row(Modifier.padding(start = 7.dp, end = 8.dp, top = 7.dp, bottom = 7.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(58.dp).shadow(8.dp, CircleShape), contentAlignment = Alignment.Center) {
+                Box(Modifier.fillMaxSize().graphicsLayer { rotationZ = angle }.clip(CircleShape).border(2.dp, Color.White.copy(alpha = .28f), CircleShape)) {
+                    Artwork(track, Modifier.fillMaxSize(), px = 160, corner = 40.dp)
+                }
+                Box(Modifier.size(13.dp).clip(CircleShape).background(tint).border(1.5.dp, Color.White.copy(alpha = .55f), CircleShape))
+            }
             Spacer(Modifier.width(12.dp))
             AnimatedContent(track, label = "minititle", modifier = Modifier.weight(1f), transitionSpec = { (fadeIn(tween(240)) + slideInVertically(tween(240)) { it / 4 }) togetherWith fadeOut(tween(120)) }) { t ->
                 Column {
-                    Text(t.title, color = N.text, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-                    Text(t.artist, color = N.text.copy(alpha = .7f), fontSize = 12.sp, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                    Text(t.title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                    Text(t.artist, color = Color.White.copy(alpha = .72f), fontSize = 12.sp, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                 }
             }
             Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(progress = { if (vm.duration > 0) (vm.position.toFloat() / vm.duration).coerceIn(0f, 1f) else 0f }, modifier = Modifier.fillMaxSize().padding(2.dp), color = N.accent, trackColor = Color.White.copy(alpha = .14f), strokeWidth = 2.5.dp)
-                IconButton(onClick = { vm.togglePlay() }, modifier = Modifier.size(40.dp)) { PlayPauseIcon(vm.isPlaying, N.text, Modifier.size(28.dp)) }
+                CircularProgressIndicator(progress = { if (vm.duration > 0) (vm.position.toFloat() / vm.duration).coerceIn(0f, 1f) else 0f }, modifier = Modifier.fillMaxSize().padding(2.dp), color = Color.White, trackColor = Color.White.copy(alpha = .22f), strokeWidth = 2.5.dp)
+                IconButton(onClick = { vm.togglePlay() }, modifier = Modifier.size(40.dp)) { PlayPauseIcon(vm.isPlaying, Color.White, Modifier.size(26.dp)) }
             }
-            IconButton(onClick = { vm.next() }) { Icon(Icons.Rounded.SkipNext, "Next", tint = N.text, modifier = Modifier.size(28.dp)) }
+            IconButton(onClick = { vm.next() }) { Icon(Icons.Rounded.SkipNext, "Next", tint = Color.White, modifier = Modifier.size(28.dp)) }
         }
-    }
-}
-
-@Composable
-private fun MiniProgress(modifier: Modifier) {
-    val vm = LocalVm.current
-    val f = if (vm.duration > 0) (vm.position.toFloat() / vm.duration).coerceIn(0f, 1f) else 0f
-    Box(modifier.fillMaxWidth().height(3.dp).background(Color.White.copy(alpha = .1f))) {
-        Box(Modifier.fillMaxWidth(f).height(3.dp).background(N.accent))
     }
 }

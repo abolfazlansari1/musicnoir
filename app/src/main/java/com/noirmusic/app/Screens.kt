@@ -1,5 +1,10 @@
 package com.noirmusic.app
 
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideInHorizontally
@@ -224,18 +229,13 @@ private fun HeroCard() {
 
 @Composable
 private fun QuickTile(title: String, subtitle: String, icon: ImageVector, highlight: Boolean, modifier: Modifier, onClick: () -> Unit) {
-    val bg = if (highlight) Modifier.background(Brush.linearGradient(listOf(N.accent, N.accent.copy(alpha = .55f)))) else Modifier.background(N.panel)
-    val fg = if (highlight) N.onAccent else N.text
-    Row(modifier.clip(RoundedCornerShape(20.dp)).then(bg).hairline(RoundedCornerShape(20.dp)).bounceClick(onClick = onClick).padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(38.dp).clip(CircleShape).background(if (highlight) Color.White.copy(alpha = .25f) else N.panel2), contentAlignment = Alignment.Center) {
-            Icon(icon, null, tint = if (highlight) N.onAccent else N.accent, modifier = Modifier.size(20.dp))
-        }
-        Spacer(Modifier.width(10.dp))
-        Column {
-            Text(title, color = fg, fontWeight = FontWeight.Bold, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(subtitle, color = if (highlight) N.onAccent.copy(alpha = .7f) else N.muted, fontSize = 11.sp, maxLines = 1)
-        }
+    val base = when {
+        highlight -> androidx.compose.ui.graphics.lerp(N.accent, Color.Black, .22f)
+        title == "Favorites" -> CardViolet
+        title == "Recently played" -> CardAmber
+        else -> CardRose
     }
+    FeatureCard(title, subtitle, icon, base, modifier, onClick = onClick)
 }
 
 @Composable
@@ -267,10 +267,24 @@ fun LibraryScreen(states: ListStates, sub: Int, onSub: (Int) -> Unit) {
     val labels = listOf("Songs", "Albums", "Artists", "Folders", "Playlists")
     Column(Modifier.fillMaxSize()) {
         ScreenTitle("Library")
-        LazyRow(flingBehavior = rememberSmoothFling(), contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(listOf(0, 4, 1, 2, 3)) { i -> NoirChip(labels[i], sub == i, { onSub(i) }) }
+        Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            FeatureCard("Favorites", vm.favoriteTracks.size.toString(), Icons.Rounded.Star, CardViolet, Modifier.weight(1f)) { ui.navigate(Route.Favorites) }
+            FeatureCard("Playlists", vm.playlists.size.toString(), Icons.Rounded.QueueMusic, CardTeal, Modifier.weight(1f)) { onSub(4) }
+            FeatureCard("Recent", vm.recentTracks.size.toString(), Icons.Rounded.History, CardAmber, Modifier.weight(1f), art = vm.recentTracks.firstOrNull()) { ui.navigate(Route.Recent) }
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(14.dp))
+        LazyRow(flingBehavior = rememberSmoothFling(), contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+            items(listOf(0, 4, 1, 2, 3)) { i ->
+                val selected = sub == i
+                val color by animateColorAsState(if (selected) N.text else N.muted, tween(200), label = "tabcolor")
+                val ind by animateFloatAsState(if (selected) 1f else 0f, spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium), label = "tabind")
+                Column(Modifier.clip(RoundedCornerShape(10.dp)).bounceClick { onSub(i) }.padding(vertical = 4.dp), horizontalAlignment = Alignment.Start) {
+                    Text(labels[i], color = color, fontSize = 20.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium)
+                    Box(Modifier.padding(top = 4.dp).width(24.dp).height(3.dp).graphicsLayer { scaleX = ind; alpha = ind; transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, .5f) }.clip(CircleShape).background(N.accent))
+                }
+            }
+        }
+        Spacer(Modifier.height(6.dp))
         if (!vm.permissionGranted) {
             EmptyState(title = "Music access required", subtitle = "Allow audio access to see your library.", actionLabel = "Allow access", onAction = ui.requestPermission)
             return
@@ -302,8 +316,7 @@ private fun SongsTab(state: LazyListState) {
         return
     }
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().padding(start = 18.dp, end = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("${songs.size} songs • ${SortKey.entries[vm.sortKey].label}", color = N.muted, fontSize = 12.sp, modifier = Modifier.weight(1f))
+        ShuffleRow(onShuffle = { vm.playShuffled(songs) }, subtitle = "${songCount(songs.size)} • ${SortKey.entries[vm.sortKey].label}", modifier = Modifier.padding(end = 2.dp)) {
             var open by remember { mutableStateOf(false) }
             Box {
                 IconButton(onClick = { open = true }) { Icon(Icons.Rounded.Sort, "Sort", tint = N.accent) }
@@ -318,7 +331,6 @@ private fun SongsTab(state: LazyListState) {
                 }
             }
         }
-        PlayShuffleRow({ vm.play(songs, 0, false) }, { vm.playShuffled(songs) })
         val letters = remember(songs, vm.sortKey) { if (vm.sortKey in 0..2 && songs.size > 40) buildLetters(songs, vm.sortKey) else emptyList() }
         Box(Modifier.fillMaxSize()) {
             LazyColumn(flingBehavior = rememberSmoothFling(), state = state, contentPadding = PaddingValues(bottom = 16.dp, end = if (letters.isEmpty()) 0.dp else 14.dp)) {
@@ -589,7 +601,7 @@ fun CollectionScreen(
             if (tracks.isEmpty()) {
                 item { EmptyState(title = "Nothing here yet", subtitle = emptyText) }
             } else {
-                item { Spacer(Modifier.height(8.dp)); PlayShuffleRow({ vm.play(tracks, 0, false) }, { vm.playShuffled(tracks) }) }
+                item { Spacer(Modifier.height(4.dp)); ShuffleRow(onShuffle = { vm.playShuffled(tracks) }, subtitle = songCount(tracks.size)) }
                 item { headerExtra() }
                 itemsIndexed(tracks, key = { i, t -> "${t.id}#$i" }) { i, t ->
                     TrackRow(t, t.id == currentId, vm.isPlaying, { vm.play(tracks, i, false) }, modifier = Modifier.animateItem(), index = if (showIndex) i else null, trailing = trailing?.invoke(t))

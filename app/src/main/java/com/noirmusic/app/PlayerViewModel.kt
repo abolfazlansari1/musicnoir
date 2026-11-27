@@ -199,8 +199,20 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
             }
             applyLibrary(list)
             loading = false
+            prefetchArt(sortedTracks)
             tryRestore()
             syncQueue(); syncState()
+        }
+    }
+
+    private var prefetchJob: kotlinx.coroutines.Job? = null
+    /** Warm the artwork cache in the background so lists never wait on image decoding while scrolling. */
+    private fun prefetchArt(list: List<MusicTrack>) {
+        prefetchJob?.cancel()
+        val ctx = getApplication<Application>().applicationContext
+        val batch = list.take(450)
+        prefetchJob = viewModelScope.launch(Dispatchers.Default) {
+            for (t in batch) { kotlinx.coroutines.ensureActive(); ArtCache.load(ctx, t.id, t.uri, t.artworkUri, 160) }
         }
     }
 

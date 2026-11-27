@@ -1,5 +1,7 @@
 package com.noirmusic.app
 
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.animation.core.animateDecay
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
@@ -165,7 +167,8 @@ fun TrackRow(
     val vm = LocalVm.current
     val ui = LocalUi.current
     val haptic = rememberHaptic()
-    val selected = selectable && vm.selection.any { it.id == track.id }
+    val selectedState = remember(track.id, selectable) { derivedStateOf { selectable && vm.selection.any { it.id == track.id } } }
+    val selected by selectedState
     val bg by animateColorAsState(
         when { selected -> N.accent.copy(alpha = .24f); isCurrent -> N.accent.copy(alpha = .13f); else -> Color.Transparent }, label = "rowbg"
     )
@@ -232,16 +235,50 @@ fun SectionHeader(title: String, modifier: Modifier = Modifier, action: String? 
 }
 
 @Composable
-fun PlayShuffleRow(onPlay: () -> Unit, onShuffle: () -> Unit, modifier: Modifier = Modifier) {
-    Row(modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Button(onClick = onPlay, modifier = Modifier.weight(1f).height(46.dp), shape = RoundedCornerShape(16.dp), colors = ButtonDefaults.buttonColors(containerColor = N.accent, contentColor = N.onAccent)) {
-            Icon(Icons.Rounded.PlayArrow, null); Spacer(Modifier.width(6.dp)); Text("Play", fontWeight = FontWeight.Bold)
+fun ShuffleRow(onShuffle: () -> Unit, subtitle: String? = null, modifier: Modifier = Modifier, trailing: (@Composable () -> Unit)? = null) {
+    Row(modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.weight(1f).clip(RoundedCornerShape(20.dp)).bounceClick(onClick = onShuffle).padding(horizontal = 8.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                Modifier.size(42.dp).clip(CircleShape).background(Brush.linearGradient(listOf(N.accentSoft, N.accent))),
+                contentAlignment = Alignment.Center
+            ) { Icon(Icons.Rounded.Shuffle, null, tint = N.onAccent, modifier = Modifier.size(22.dp)) }
+            Spacer(Modifier.width(14.dp))
+            Column {
+                Text("Shuffle playback", color = N.text, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                if (subtitle != null) Text(subtitle, color = N.muted, fontSize = 12.sp, maxLines = 1)
+            }
         }
-        OutlinedButton(onClick = onShuffle, modifier = Modifier.weight(1f).height(46.dp), shape = RoundedCornerShape(16.dp)) {
-            Icon(Icons.Rounded.Shuffle, null, tint = N.accent); Spacer(Modifier.width(6.dp)); Text("Shuffle", color = N.text, fontWeight = FontWeight.Bold)
+        trailing?.invoke()
+    }
+}
+
+/** Compact gradient shortcut card: icon on top, label at the bottom, optional faded artwork behind. */
+@Composable
+fun FeatureCard(title: String, subtitle: String?, icon: ImageVector, base: Color, modifier: Modifier = Modifier, art: MusicTrack? = null, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(20.dp)
+    Box(
+        modifier.height(84.dp).clip(shape)
+            .background(Brush.linearGradient(listOf(base, androidx.compose.ui.graphics.lerp(base, Color.Black, .38f))))
+            .bounceClick(onClick = onClick)
+    ) {
+        if (art != null) Artwork(art, Modifier.fillMaxSize().graphicsLayer { alpha = .28f }, px = 160, corner = 0.dp)
+        Column(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 12.dp), verticalArrangement = Arrangement.SpaceBetween) {
+            Icon(icon, null, tint = Color.White, modifier = Modifier.size(22.dp))
+            Column {
+                Text(title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (subtitle != null) Text(subtitle, color = Color.White.copy(alpha = .72f), fontSize = 11.sp, maxLines = 1)
+            }
         }
     }
 }
+
+val CardViolet = Color(0xFF7B3FE4)
+val CardTeal = Color(0xFF2F9E8F)
+val CardAmber = Color(0xFFC8902F)
+val CardRose = Color(0xFFD14D72)
 
 @Composable
 fun EmptyState(icon: ImageVector = Icons.Rounded.LibraryMusic, title: String, subtitle: String, actionLabel: String? = null, onAction: () -> Unit = {}) {
@@ -340,20 +377,5 @@ fun formatSize(bytes: Long): String {
 
 fun songCount(n: Int) = if (n == 1) "1 song" else "$n songs"
 
-private object SmoothFling : androidx.compose.foundation.gestures.FlingBehavior {
-    private val spec = androidx.compose.animation.core.exponentialDecay<Float>(frictionMultiplier = 0.62f)
-    override suspend fun androidx.compose.foundation.gestures.ScrollScope.performFling(initialVelocity: Float): Float {
-        var last = 0f
-        val state = androidx.compose.animation.core.AnimationState(0f, initialVelocity)
-        state.animateDecay(spec) {
-            val delta = value - last
-            val consumed = scrollBy(delta)
-            last = value
-            if (kotlin.math.abs(delta - consumed) > 0.5f) cancelAnimation()
-        }
-        return state.velocity
-    }
-}
-
 @Composable
-fun rememberSmoothFling(): androidx.compose.foundation.gestures.FlingBehavior = SmoothFling
+fun rememberSmoothFling(): androidx.compose.foundation.gestures.FlingBehavior = androidx.compose.foundation.gestures.ScrollableDefaults.flingBehavior()

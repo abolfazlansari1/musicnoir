@@ -43,7 +43,7 @@ import java.util.concurrent.ConcurrentHashMap
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 object ArtCache {
     private val decoder = Dispatchers.IO.limitedParallelism(3)
-    private val cache = object : LruCache<String, Bitmap>(40 * 1024 * 1024) {
+    private val cache = object : LruCache<String, Bitmap>(56 * 1024 * 1024) {
         override fun sizeOf(key: String, value: Bitmap): Int = value.byteCount
     }
     private val misses: MutableSet<String> = ConcurrentHashMap.newKeySet()
