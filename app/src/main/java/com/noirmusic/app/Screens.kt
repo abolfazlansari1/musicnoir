@@ -1,5 +1,6 @@
 package com.noirmusic.app
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.animation.core.spring
@@ -264,17 +265,17 @@ fun AlbumCard(album: AlbumItem, modifier: Modifier = Modifier, onClick: () -> Un
 fun LibraryScreen(states: ListStates, sub: Int, onSub: (Int) -> Unit) {
     val vm = LocalVm.current
     val ui = LocalUi.current
-    val labels = listOf("Songs", "Albums", "Artists", "Folders", "Playlists")
+    val labels = listOf("Songs", "Albums", "Artists", "Folders")
     Column(Modifier.fillMaxSize()) {
         ScreenTitle("Library")
         Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             FeatureCard("Favorites", vm.favoriteTracks.size.toString(), Icons.Rounded.Star, CardViolet, Modifier.weight(1f)) { ui.navigate(Route.Favorites) }
-            FeatureCard("Playlists", vm.playlists.size.toString(), Icons.Rounded.QueueMusic, CardTeal, Modifier.weight(1f)) { onSub(4) }
+            FeatureCard("Playlists", vm.playlists.size.toString(), Icons.Rounded.QueueMusic, CardTeal, Modifier.weight(1f)) { ui.navigate(Route.Playlists) }
             FeatureCard("Recent", vm.recentTracks.size.toString(), Icons.Rounded.History, CardAmber, Modifier.weight(1f), art = vm.recentTracks.firstOrNull()) { ui.navigate(Route.Recent) }
         }
         Spacer(Modifier.height(14.dp))
         LazyRow(flingBehavior = rememberSmoothFling(), contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-            items(listOf(0, 4, 1, 2, 3)) { i ->
+            items(listOf(0, 1, 2, 3)) { i ->
                 val selected = sub == i
                 val color by animateColorAsState(if (selected) N.text else N.muted, tween(200), label = "tabcolor")
                 val ind by animateFloatAsState(if (selected) 1f else 0f, spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium), label = "tabind")
@@ -289,7 +290,7 @@ fun LibraryScreen(states: ListStates, sub: Int, onSub: (Int) -> Unit) {
             EmptyState(title = "Music access required", subtitle = "Allow audio access to see your library.", actionLabel = "Allow access", onAction = ui.requestPermission)
             return
         }
-        val order = listOf(0, 4, 1, 2, 3)
+        val order = listOf(0, 1, 2, 3)
         AnimatedContent(sub, label = "libsub", transitionSpec = {
             val dir = if (order.indexOf(targetState) > order.indexOf(initialState)) 1 else -1
             (slideInHorizontally(tween(320, easing = FastOutSlowInEasing)) { dir * it / 5 } + fadeIn(tween(260, delayMillis = 40)))
@@ -299,8 +300,7 @@ fun LibraryScreen(states: ListStates, sub: Int, onSub: (Int) -> Unit) {
                 0 -> SongsTab(states.songs)
                 1 -> AlbumsTab(states.albums)
                 2 -> ArtistsTab(states.artists)
-                3 -> FoldersTab(states.folders)
-                else -> PlaylistsTab(states.playlists)
+                else -> FoldersTab(states.folders)
             }
         }
     }
@@ -529,6 +529,7 @@ fun RouteScreen(route: Route) {
         Route.Recent -> CollectionScreen("Recently played", songCount(vm.recentTracks.size), vm.recentTracks, vm.recentTracks.firstOrNull(), emptyText = "Songs you play will show up here.")
         Route.MostPlayed -> CollectionScreen("Most played", songCount(vm.mostPlayed.size), vm.mostPlayed, vm.mostPlayed.firstOrNull(), emptyText = "Play some songs to build this list.")
         Route.Equalizer -> EqualizerScreen(onBack = ui.back)
+        Route.Playlists -> Column(Modifier.fillMaxSize()) { TopBar("Playlists", ui.back); PlaylistsTab(rememberLazyListState()) }
         is Route.Playlist -> PlaylistScreen(route.name)
     }
 }

@@ -49,6 +49,7 @@ sealed interface Route {
     data object Recent : Route
     data object MostPlayed : Route
     data object Equalizer : Route
+    data object Playlists : Route
 }
 
 /** Stable key used to group songs into albums (and to navigate to one). */
