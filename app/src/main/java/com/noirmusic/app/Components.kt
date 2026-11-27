@@ -260,12 +260,12 @@ fun ShuffleRow(onShuffle: () -> Unit, subtitle: String? = null, modifier: Modifi
 fun FeatureCard(title: String, subtitle: String?, icon: ImageVector, base: Color, modifier: Modifier = Modifier, art: MusicTrack? = null, onClick: () -> Unit) {
     val shape = RoundedCornerShape(20.dp)
     Box(
-        modifier.height(84.dp).clip(shape)
+        modifier.height(96.dp).clip(shape)
             .background(Brush.linearGradient(listOf(base, androidx.compose.ui.graphics.lerp(base, Color.Black, .38f))))
             .bounceClick(onClick = onClick)
     ) {
         if (art != null) Artwork(art, Modifier.fillMaxSize().graphicsLayer { alpha = .28f }, px = 160, corner = 0.dp)
-        Column(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 12.dp), verticalArrangement = Arrangement.SpaceBetween) {
+        Column(Modifier.fillMaxSize().padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 10.dp), verticalArrangement = Arrangement.SpaceBetween) {
             Icon(icon, null, tint = Color.White, modifier = Modifier.size(22.dp))
             Column {
                 Text(title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
