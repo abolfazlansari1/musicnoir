@@ -1,5 +1,6 @@
 package com.noirmusic.app
 
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.shape.CircleShape
@@ -94,7 +95,7 @@ class MainActivity : ComponentActivity() {
     private val vm: PlayerViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        androidx.core.splashscreen.SplashScreen.installSplashScreen(this)
+        installSplashScreen()
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(AndroidColor.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.dark(AndroidColor.TRANSPARENT)
