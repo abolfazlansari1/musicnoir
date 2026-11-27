@@ -44,7 +44,7 @@ adb shell input keyevent 4; sleep 1
 adb shell monkey -p com.noirmusic.app -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1; sleep 2
 T "Search"; sleep 1
 T "Songs, artists, albums"; adb shell input text "luma"; sleep 1; adb shell input keyevent 111; S 17_search 2
-T "Settings"; S 18_settings
+sleep 1; T "Settings"; sleep 2; T "Settings"; S 18_settings 2
 adb shell input swipe 540 1800 540 600 300; S 19_settings_2 1
 adb shell input swipe 540 1800 540 600 300; S 20_settings_3 1
 T "Home"; sleep 1
