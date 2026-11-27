@@ -28,6 +28,7 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -212,7 +213,7 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
         val ctx = getApplication<Application>().applicationContext
         val batch = list.take(450)
         prefetchJob = viewModelScope.launch(Dispatchers.Default) {
-            for (t in batch) { kotlinx.coroutines.ensureActive(); ArtCache.load(ctx, t.id, t.uri, t.artworkUri, 160) }
+            for (t in batch) { this.ensureActive(); ArtCache.load(ctx, t.id, t.uri, t.artworkUri, 160) }
         }
     }
 
