@@ -14,7 +14,7 @@ android {
         targetSdk = 35
         // CI run number keeps versionCode increasing so every build installs as an update.
         versionCode = (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0) + 100
-        versionName = "3.6.0"
+        versionName = "3.7.0"
     }
 
     // One fixed key for every build, so a new APK always updates the installed one in place.
@@ -30,7 +30,9 @@ android {
     buildTypes {
         debug { signingConfig = signingConfigs.getByName("noir") }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.getByName("noir")
         }
     }
@@ -57,6 +59,8 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.palette:palette-ktx:1.0.0")
+    implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation("androidx.profileinstaller:profileinstaller:1.4.1")
     debugImplementation("androidx.compose.ui:ui-tooling")
 
     implementation("androidx.media3:media3-exoplayer:1.5.1")

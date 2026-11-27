@@ -40,7 +40,9 @@ import java.io.ByteArrayOutputStream
 import java.util.concurrent.ConcurrentHashMap
 
 /** Artwork loading: system thumbnail (API 29+), embedded picture, then the legacy album-art provider. */
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 object ArtCache {
+    private val decoder = Dispatchers.IO.limitedParallelism(3)
     private val cache = object : LruCache<String, Bitmap>(40 * 1024 * 1024) {
         override fun sizeOf(key: String, value: Bitmap): Int = value.byteCount
     }
@@ -50,7 +52,7 @@ object ArtCache {
     fun key(id: Long, px: Int) = "$id:$px"
     fun peek(key: String): Bitmap? = cache.get(key)
 
-    suspend fun load(ctx: Context, id: Long, uri: Uri, artUri: Uri?, px: Int): Bitmap? = withContext(Dispatchers.IO) {
+    suspend fun load(ctx: Context, id: Long, uri: Uri, artUri: Uri?, px: Int): Bitmap? = withContext(decoder) {
         val k = key(id, px)
         cache.get(k)?.let { return@withContext it }
         if (k in misses) return@withContext null
@@ -118,19 +120,22 @@ fun Artwork(track: MusicTrack?, modifier: Modifier = Modifier, px: Int = 256, co
         if (track != null && bmp == null) bmp = ArtCache.load(ctx, track.id, track.uri, track.artworkUri, px)
     }
     val seed = ((track?.albumId ?: 0L) * 47 + (track?.album?.hashCode() ?: 0)).toInt()
-    val hue = ((seed % 360) + 360) % 360
-    val c1 = Color.hsv(hue.toFloat(), .45f, .42f)
-    val c2 = Color.hsv(((hue + 40) % 360).toFloat(), .5f, .16f)
-    Box(
-        modifier.clip(RoundedCornerShape(corner)).background(Brush.linearGradient(listOf(c1, c2))),
-        contentAlignment = Alignment.Center
-    ) {
-        Crossfade(bmp, label = "art") { b ->
-            if (b != null) {
-                Image(b.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-            } else {
-                Icon(Icons.Rounded.MusicNote, null, tint = Color.White.copy(alpha = .55f), modifier = Modifier.fillMaxSize(.42f))
+    val brush = remember(seed) {
+        val hue = ((seed % 360) + 360) % 360
+        Brush.linearGradient(listOf(Color.hsv(hue.toFloat(), .45f, .42f), Color.hsv(((hue + 40) % 360).toFloat(), .5f, .16f)))
+    }
+    val shape = remember(corner) { RoundedCornerShape(corner) }
+    val image = remember(bmp) { bmp?.asImageBitmap() }
+    Box(modifier.clip(shape).background(brush), contentAlignment = Alignment.Center) {
+        if (px >= 400) {
+            Crossfade(image, label = "art") { b ->
+                if (b != null) Image(b, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                else Icon(Icons.Rounded.MusicNote, null, tint = Color.White.copy(alpha = .55f), modifier = Modifier.fillMaxSize(.42f))
             }
+        } else if (image != null) {
+            Image(image, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        } else {
+            Icon(Icons.Rounded.MusicNote, null, tint = Color.White.copy(alpha = .55f), modifier = Modifier.fillMaxSize(.42f))
         }
     }
 }

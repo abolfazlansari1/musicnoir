@@ -1,5 +1,12 @@
 package com.noirmusic.app
 
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.border
+import kotlinx.coroutines.flow.first
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.animation.core.animateFloat
 import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
@@ -87,6 +94,7 @@ class MainActivity : ComponentActivity() {
     private val vm: PlayerViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        androidx.core.splashscreen.SplashScreen.installSplashScreen(this)
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(AndroidColor.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.dark(AndroidColor.TRANSPARENT)
@@ -227,6 +235,15 @@ private fun NoirRoot(vm: PlayerViewModel) {
         }
 
         Box(Modifier.fillMaxSize()) { ToastHost(vm, expanded, Modifier.align(Alignment.BottomCenter)) }
+        var splashGone by rememberSaveable { mutableStateOf(false) }
+        LaunchedEffect(Unit) {
+            if (!splashGone) {
+                delay(900)
+                kotlinx.coroutines.withTimeoutOrNull(2500) { snapshotFlow { vm.loading }.first { !it } }
+                splashGone = true
+            }
+        }
+        AnimatedVisibility(visible = !splashGone, enter = fadeIn(tween(1)), exit = fadeOut(tween(500))) { SplashOverlay() }
         menuTrack?.let { t ->
             TrackMenuSheet(t, onDismiss = { menuTrack = null }, onInfo = { infoTrack = t }, onDelete = { deleteTrack = t })
         }
@@ -283,5 +300,31 @@ private fun ToastHost(vm: PlayerViewModel, expanded: Boolean, modifier: Modifier
                 .clip(RoundedCornerShape(50)).background(N.panel2).hairline(RoundedCornerShape(50))
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) { Text(shown, color = N.text, fontSize = 14.sp, fontWeight = FontWeight.Medium) }
+    }
+}
+
+@Composable
+private fun SplashOverlay() {
+    val pulse = androidx.compose.animation.core.rememberInfiniteTransition(label = "splash")
+    val glow by pulse.animateFloat(.55f, 1f, androidx.compose.animation.core.infiniteRepeatable(tween(1100, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "glow")
+    val appear = remember { androidx.compose.animation.core.Animatable(0f) }
+    LaunchedEffect(Unit) { appear.animateTo(1f, tween(600, easing = FastOutSlowInEasing)) }
+    Box(Modifier.fillMaxSize().background(Color(0xFF0B0A12)).pointerInput(Unit) {}, contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.graphicsLayer { alpha = appear.value; translationY = (1f - appear.value) * 24f }) {
+            Box(contentAlignment = Alignment.Center) {
+                Box(
+                    Modifier.size(190.dp).graphicsLayer { scaleX = glow; scaleY = glow; alpha = .55f * glow }
+                        .background(androidx.compose.ui.graphics.Brush.radialGradient(listOf(N.accent.copy(alpha = .45f), Color.Transparent)), CircleShape)
+                )
+                Box(
+                    Modifier.size(108.dp).border(2.5.dp, androidx.compose.ui.graphics.Brush.sweepGradient(listOf(N.accent, N.accentSoft, Color(0xFFFF7AB6), N.accent)), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) { EqBars(N.accentSoft, true, Modifier.size(46.dp)) }
+            }
+            Spacer(Modifier.height(30.dp))
+            Text("NOIR MUSIC", color = Color(0xFFF7F4FB), fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 7.sp)
+            Spacer(Modifier.height(8.dp))
+            Text(if (LocalVm.current.loading) "Loading your library" else "Ready", color = Color(0xFF9A91AA), fontSize = 12.sp, letterSpacing = 1.sp)
+        }
     }
 }

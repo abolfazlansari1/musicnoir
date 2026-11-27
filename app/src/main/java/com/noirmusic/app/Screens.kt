@@ -322,8 +322,8 @@ private fun SongsTab(state: LazyListState) {
         val letters = remember(songs, vm.sortKey) { if (vm.sortKey in 0..2 && songs.size > 40) buildLetters(songs, vm.sortKey) else emptyList() }
         Box(Modifier.fillMaxSize()) {
             LazyColumn(flingBehavior = rememberSmoothFling(), state = state, contentPadding = PaddingValues(bottom = 16.dp, end = if (letters.isEmpty()) 0.dp else 14.dp)) {
-                itemsIndexed(songs, key = { _, t -> t.id }) { i, t ->
-                    TrackRow(t, t.id == currentId, vm.isPlaying, { vm.play(songs, i, false) }, modifier = Modifier.animateItem())
+                itemsIndexed(songs, key = { _, t -> t.id }, contentType = { _, _ -> "track" }) { i, t ->
+                    TrackRow(t, t.id == currentId, vm.isPlaying, { vm.play(songs, i, false) })
                 }
             }
             if (letters.isNotEmpty()) FastScroller(letters, state, Modifier.align(Alignment.CenterEnd))

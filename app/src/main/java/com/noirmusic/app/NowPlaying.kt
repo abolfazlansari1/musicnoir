@@ -325,7 +325,6 @@ fun MiniPlayer(onOpen: () -> Unit) {
     var dx by remember { mutableFloatStateOf(0f) }
     var dy by remember { mutableFloatStateOf(0f) }
     val shape = RoundedCornerShape(24.dp)
-    val progress = if (vm.duration > 0) (vm.position.toFloat() / vm.duration).coerceIn(0f, 1f) else 0f
     Box(
         Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)
             .offset { IntOffset(x.value.roundToInt(), 0) }
@@ -360,7 +359,7 @@ fun MiniPlayer(onOpen: () -> Unit) {
                 }
             }
             Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxSize().padding(2.dp), color = N.accent, trackColor = Color.White.copy(alpha = .14f), strokeWidth = 2.5.dp)
+                CircularProgressIndicator(progress = { if (vm.duration > 0) (vm.position.toFloat() / vm.duration).coerceIn(0f, 1f) else 0f }, modifier = Modifier.fillMaxSize().padding(2.dp), color = N.accent, trackColor = Color.White.copy(alpha = .14f), strokeWidth = 2.5.dp)
                 IconButton(onClick = { vm.togglePlay() }, modifier = Modifier.size(40.dp)) { PlayPauseIcon(vm.isPlaying, N.text, Modifier.size(28.dp)) }
             }
             IconButton(onClick = { vm.next() }) { Icon(Icons.Rounded.SkipNext, "Next", tint = N.text, modifier = Modifier.size(28.dp)) }

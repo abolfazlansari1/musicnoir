@@ -1,0 +1,7 @@
+-dontwarn com.google.errorprone.annotations.**
+-dontwarn javax.annotation.**
+-dontwarn org.checkerframework.**
+-dontwarn org.codehaus.mojo.animal_sniffer.**
+-keep class com.noirmusic.app.ArtProvider { *; }
+-keep class com.noirmusic.app.PlaybackService { *; }
+-keepattributes *Annotation*,Signature,InnerClasses
