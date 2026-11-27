@@ -26,6 +26,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.zIndex
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.material.icons.rounded.DragHandle
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.AddToQueue
 import androidx.compose.material.icons.rounded.Album
@@ -211,13 +218,35 @@ fun QueueSheet(onDismiss: () -> Unit) {
             } else LazyColumn(state = state) {
                 itemsIndexed(vm.queue, key = { i, t -> "${t.id}#$i" }) { i, t ->
                     val isCurrent = i == vm.queueIndex
+                    var dragY by remember { mutableFloatStateOf(0f) }
+                    var dragging by remember { mutableStateOf(false) }
+                    val rowPx = with(LocalDensity.current) { 70.dp.toPx() }
+                    val lastIndex = vm.queue.lastIndex
                     TrackRow(
-                        t, isCurrent, vm.isPlaying, { vm.skipTo(i) }, modifier = Modifier.animateItem(), selectable = false,
+                        t, isCurrent, vm.isPlaying, { vm.skipTo(i) },
+                        modifier = (if (dragging) Modifier else Modifier.animateItem())
+                            .zIndex(if (dragging) 1f else 0f)
+                            .graphicsLayer { translationY = dragY; if (dragging) { scaleX = 1.03f; scaleY = 1.03f; shadowElevation = 24f } },
+                        selectable = false,
                         trailing = {
-                            Row {
-                                IconButton(onClick = { vm.moveInQueue(i, i - 1) }, enabled = i > 0, modifier = Modifier.size(34.dp)) { Icon(Icons.Rounded.ArrowUpward, "Move up", tint = if (i > 0) N.muted else N.panel2, modifier = Modifier.size(18.dp)) }
-                                IconButton(onClick = { vm.moveInQueue(i, i + 1) }, enabled = i < vm.queue.lastIndex, modifier = Modifier.size(34.dp)) { Icon(Icons.Rounded.ArrowDownward, "Move down", tint = if (i < vm.queue.lastIndex) N.muted else N.panel2, modifier = Modifier.size(18.dp)) }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 IconButton(onClick = { vm.removeFromQueue(i) }, modifier = Modifier.size(34.dp)) { Icon(Icons.Rounded.Close, "Remove", tint = N.muted, modifier = Modifier.size(18.dp)) }
+                                Box(
+                                    Modifier.size(40.dp).pointerInput(i, lastIndex) {
+                                        detectDragGestures(
+                                            onDragStart = { dragging = true },
+                                            onDragEnd = {
+                                                val steps = Math.round(dragY / rowPx)
+                                                val target = (i + steps).coerceIn(0, lastIndex)
+                                                dragging = false; dragY = 0f
+                                                if (target != i) vm.moveInQueue(i, target)
+                                            },
+                                            onDragCancel = { dragging = false; dragY = 0f },
+                                            onDrag = { change, amount -> change.consume(); dragY += amount.y }
+                                        )
+                                    },
+                                    contentAlignment = Alignment.Center
+                                ) { Icon(Icons.Rounded.DragHandle, "Drag to reorder", tint = N.muted, modifier = Modifier.size(22.dp)) }
                             }
                         }
                     )

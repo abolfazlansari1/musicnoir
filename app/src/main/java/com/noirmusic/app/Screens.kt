@@ -45,6 +45,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ViewList
+import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.material.icons.rounded.ArrowDownward
@@ -371,6 +373,7 @@ private fun AlbumsTab(state: LazyGridState) {
     val ui = LocalUi.current
     if (vm.albums.isEmpty()) { EmptyState(title = "No albums", subtitle = "Albums are built from your songs' tags."); return }
     var order by rememberSaveable { mutableIntStateOf(0) }
+    var asList by rememberSaveable { mutableStateOf(false) }
     val labels = listOf("Name", "Artist", "Song count")
     val albums = remember(vm.albums, order) {
         when (order) {
@@ -387,9 +390,22 @@ private fun AlbumsTab(state: LazyGridState) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("${albums.size} albums  •  Sort", color = N.muted, fontSize = 12.sp, modifier = Modifier.padding(end = 4.dp))
                 labels.forEachIndexed { i, l -> NoirChip(l, order == i, { order = i }) }
+                Spacer(Modifier.weight(1f))
+                IconButton(onClick = { asList = !asList }, modifier = Modifier.size(36.dp)) {
+                    Icon(if (asList) Icons.Rounded.GridView else Icons.Rounded.ViewList, if (asList) "Grid view" else "List view", tint = N.accent)
+                }
             }
         }
-        items(albums, key = { it.id }) { a -> AlbumCard(a) { ui.navigate(Route.Album(a.id)) } }
+        if (asList) items(albums, key = { "l${it.id}" }, span = { GridItemSpan(maxLineSpan) }) { a ->
+            Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable { ui.navigate(Route.Album(a.id)) }.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Artwork(a.cover, Modifier.size(60.dp), px = 160, corner = 14.dp)
+                Spacer(Modifier.width(14.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(a.name, color = N.text, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text("${a.artist}  •  ${songCount(a.tracks.size)}", color = N.muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+        } else items(albums, key = { it.id }) { a -> AlbumCard(a) { ui.navigate(Route.Album(a.id)) } }
     }
 }
 
