@@ -220,7 +220,8 @@ fun SettingsScreen(state: LazyListState) {
         item {
             SettingsCard("Appearance") {
                 Text("Accent color", color = N.text, fontSize = 15.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
-                Row(Modifier.fillMaxWidth().horizontalScroll(androidx.compose.foundation.rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+                androidx.compose.foundation.layout.FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     val swatches = AccentChoices.toMutableList().also {
                         if (android.os.Build.VERSION.SDK_INT >= 31) it.add("Material You" to androidx.compose.material3.dynamicDarkColorScheme(ctx).primary)
                     }
