@@ -474,6 +474,7 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
     fun next() { controller?.seekToNext() }
     fun previous() { controller?.seekToPrevious() }
     fun seekTo(ms: Long) { controller?.seekTo(ms); position = ms }
+    fun seekBy(deltaMs: Long) { if (duration > 0) seekTo((position + deltaMs).coerceIn(0L, duration)) }
     fun seekFraction(f: Float) { if (duration > 0) seekTo((duration * f).toLong()) }
     fun skipTo(index: Int) { controller?.let { if (index in 0 until it.mediaItemCount && index != it.currentMediaItemIndex) { it.seekToDefaultPosition(index) } } }
 

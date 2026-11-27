@@ -45,6 +45,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Add
@@ -368,11 +370,26 @@ private fun AlbumsTab(state: LazyGridState) {
     val vm = LocalVm.current
     val ui = LocalUi.current
     if (vm.albums.isEmpty()) { EmptyState(title = "No albums", subtitle = "Albums are built from your songs' tags."); return }
+    var order by rememberSaveable { mutableIntStateOf(0) }
+    val labels = listOf("Name", "Artist", "Song count")
+    val albums = remember(vm.albums, order) {
+        when (order) {
+            1 -> vm.albums.sortedWith(compareBy({ it.artist.lowercase() }, { it.name.lowercase() }))
+            2 -> vm.albums.sortedByDescending { it.tracks.size }
+            else -> vm.albums.sortedBy { it.name.lowercase() }
+        }
+    }
     LazyVerticalGrid(
         GridCells.Fixed(2), state = state, contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = 16.dp, top = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        items(vm.albums, key = { it.id }) { a -> AlbumCard(a) { ui.navigate(Route.Album(a.id)) } }
+        item(span = { GridItemSpan(maxLineSpan) }) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("${albums.size} albums  •  Sort", color = N.muted, fontSize = 12.sp, modifier = Modifier.padding(end = 4.dp))
+                labels.forEachIndexed { i, l -> NoirChip(l, order == i, { order = i }) }
+            }
+        }
+        items(albums, key = { it.id }) { a -> AlbumCard(a) { ui.navigate(Route.Album(a.id)) } }
     }
 }
 

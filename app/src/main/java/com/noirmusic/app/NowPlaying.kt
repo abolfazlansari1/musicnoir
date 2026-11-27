@@ -47,6 +47,8 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Forward10
+import androidx.compose.material.icons.rounded.Replay10
 import androidx.compose.material.icons.rounded.Equalizer
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Lyrics
@@ -156,8 +158,8 @@ fun NowPlayingScreen(onClose: () -> Unit) {
             Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 AnimatedContent(track, label = "titles", modifier = Modifier.weight(1f), transitionSpec = { fadeIn(tween(250)) togetherWith fadeOut(tween(150)) }) { t ->
                     Column {
-                        Text(t.title, color = N.text, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, modifier = Modifier.basicMarquee())
-                        Text(t.artist, color = N.text.copy(alpha = .7f), fontSize = 15.sp, maxLines = 1, modifier = Modifier.padding(top = 2.dp).basicMarquee())
+                        Text(t.title, color = N.text, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, modifier = Modifier.basicMarquee())
+                        Text(t.artist, color = N.text.copy(alpha = .7f), fontSize = 16.sp, maxLines = 1, modifier = Modifier.padding(top = 2.dp).clip(RoundedCornerShape(6.dp)).clickable { onClose(); ui.navigate(Route.Artist(t.artist)) }.basicMarquee())
                     }
                 }
                 FavoriteButton(vm.isFavorite(track.id), { vm.toggleFavorite(track) })
@@ -205,8 +207,12 @@ private fun SeekSection() {
     Column(Modifier.fillMaxWidth()) {
         SeekBar(progress = if (vm.duration > 0) vm.position.toFloat() / vm.duration else 0f, onSeek = { vm.seekFraction(it) }, color = N.text)
         Row(Modifier.fillMaxWidth().padding(horizontal = 2.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(formatTime(vm.position), color = N.text.copy(alpha = .65f), fontSize = 12.sp)
-            Text(formatTime(vm.duration), color = N.text.copy(alpha = .65f), fontSize = 12.sp)
+            Text(formatTime(vm.position), color = N.text.copy(alpha = .65f), fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterVertically))
+            Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+                Icon(Icons.Rounded.Replay10, "Back 10 seconds", tint = N.text.copy(alpha = .75f), modifier = Modifier.size(30.dp).clip(CircleShape).bounceClick { vm.seekBy(-10_000) }.padding(3.dp))
+                Icon(Icons.Rounded.Forward10, "Forward 10 seconds", tint = N.text.copy(alpha = .75f), modifier = Modifier.size(30.dp).clip(CircleShape).bounceClick { vm.seekBy(10_000) }.padding(3.dp))
+            }
+            Text(formatTime(vm.duration), color = N.text.copy(alpha = .65f), fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterVertically))
         }
     }
 }
