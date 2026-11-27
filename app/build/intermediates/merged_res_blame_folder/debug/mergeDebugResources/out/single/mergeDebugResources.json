@@ -1,0 +1,22 @@
+[
+    {
+        "merged": "com.noirmusic.app-debug-54:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.noirmusic.app-main-56:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "com.noirmusic.app-debug-54:/drawable_ic_noir_mono.xml.flat",
+        "source": "com.noirmusic.app-main-56:/drawable/ic_noir_mono.xml"
+    },
+    {
+        "merged": "com.noirmusic.app-debug-54:/drawable_ic_noir_background.xml.flat",
+        "source": "com.noirmusic.app-main-56:/drawable/ic_noir_background.xml"
+    },
+    {
+        "merged": "com.noirmusic.app-debug-54:/drawable_ic_noir_foreground.xml.flat",
+        "source": "com.noirmusic.app-main-56:/drawable/ic_noir_foreground.xml"
+    },
+    {
+        "merged": "com.noirmusic.app-debug-54:/drawable_ic_stat_noir.xml.flat",
+        "source": "com.noirmusic.app-main-56:/drawable/ic_stat_noir.xml"
+    }
+]

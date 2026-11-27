@@ -1,0 +1,10 @@
+R_DEF: Internal format may change without notice
+local
+color noir_bg
+drawable ic_noir_background
+drawable ic_noir_foreground
+drawable ic_noir_mono
+drawable ic_stat_noir
+mipmap ic_launcher
+style Theme.NoirMusic
+style Theme.NoirMusic.Splash

@@ -1,0 +1,223 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.noirmusic.app"
+4    android:versionCode="110"
+5    android:versionName="3.8.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="26"
+9        android:targetSdkVersion="35" />
+10
+11    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+11-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:2:5-75
+11-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:2:22-72
+12    <uses-permission
+12-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:3:5-107
+13        android:name="android.permission.READ_EXTERNAL_STORAGE"
+13-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:3:22-77
+14        android:maxSdkVersion="32" />
+14-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:3:78-104
+15    <uses-permission android:name="android.permission.INTERNET" />
+15-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:4:5-67
+15-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:4:22-64
+16    <uses-permission android:name="android.permission.WAKE_LOCK" />
+16-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:5:5-68
+16-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:5:22-65
+17    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+17-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:6:5-77
+17-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:6:22-74
+18    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+18-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:7:5-92
+18-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:7:22-89
+19    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+19-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:8:5-77
+19-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:8:22-74
+20    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+20-->[androidx.media3:media3-common:1.5.1] /home/runner/.gradle/caches/8.9/transforms/c533e040fe5656b40389507aa7c8d555/transformed/media3-common-1.5.1/AndroidManifest.xml:22:5-79
+20-->[androidx.media3:media3-common:1.5.1] /home/runner/.gradle/caches/8.9/transforms/c533e040fe5656b40389507aa7c8d555/transformed/media3-common-1.5.1/AndroidManifest.xml:22:22-76
+21
+22    <permission
+22-->[androidx.core:core:1.15.0] /home/runner/.gradle/caches/8.9/transforms/cd46abea9d16e862d0dfae7b2db85bca/transformed/core-1.15.0/AndroidManifest.xml:22:5-24:47
+23        android:name="com.noirmusic.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+23-->[androidx.core:core:1.15.0] /home/runner/.gradle/caches/8.9/transforms/cd46abea9d16e862d0dfae7b2db85bca/transformed/core-1.15.0/AndroidManifest.xml:23:9-81
+24        android:protectionLevel="signature" />
+24-->[androidx.core:core:1.15.0] /home/runner/.gradle/caches/8.9/transforms/cd46abea9d16e862d0dfae7b2db85bca/transformed/core-1.15.0/AndroidManifest.xml:24:9-44
+25
+26    <uses-permission android:name="com.noirmusic.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+26-->[androidx.core:core:1.15.0] /home/runner/.gradle/caches/8.9/transforms/cd46abea9d16e862d0dfae7b2db85bca/transformed/core-1.15.0/AndroidManifest.xml:26:5-97
+26-->[androidx.core:core:1.15.0] /home/runner/.gradle/caches/8.9/transforms/cd46abea9d16e862d0dfae7b2db85bca/transformed/core-1.15.0/AndroidManifest.xml:26:22-94
+27
+28    <application
+28-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:9:5-51:19
+29        android:allowBackup="true"
+29-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:10:9-35
+30        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+30-->[androidx.core:core:1.15.0] /home/runner/.gradle/caches/8.9/transforms/cd46abea9d16e862d0dfae7b2db85bca/transformed/core-1.15.0/AndroidManifest.xml:28:18-86
+31        android:debuggable="true"
+32        android:enableOnBackInvokedCallback="true"
+32-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:15:9-51
+33        android:extractNativeLibs="false"
+34        android:icon="@mipmap/ic_launcher"
+34-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:12:9-43
+35        android:label="Noir Music"
+35-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:11:9-35
+36        android:roundIcon="@mipmap/ic_launcher"
+36-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:13:9-48
+37        android:supportsRtl="true"
+37-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:14:9-35
+38        android:theme="@style/Theme.NoirMusic"
+38-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:16:9-47
+39        android:usesCleartextTraffic="false" >
+39-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:17:9-45
+40        <activity
+40-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:18:9-38:20
+41            android:name="com.noirmusic.app.MainActivity"
+41-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:19:13-41
+42            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode|density|fontScale|layoutDirection|locale"
+42-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:24:13-163
+43            android:exported="true"
+43-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:21:13-36
+44            android:launchMode="singleTask"
+44-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:22:13-44
+45            android:theme="@style/Theme.NoirMusic.Splash"
+45-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:20:13-58
+46            android:windowSoftInputMode="adjustResize" >
+46-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:23:13-55
+47            <intent-filter>
+47-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:25:13-28:29
+48                <action android:name="android.intent.action.MAIN" />
+48-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:26:17-69
+48-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:26:25-66
+49
+50                <category android:name="android.intent.category.LAUNCHER" />
+50-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:27:17-77
+50-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:27:27-74
+51            </intent-filter>
+52            <intent-filter>
+52-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:29:13-37:29
+53                <action android:name="android.intent.action.VIEW" />
+53-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:30:17-69
+53-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:30:25-66
+54
+55                <category android:name="android.intent.category.DEFAULT" />
+55-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:31:17-76
+55-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:31:27-73
+56                <category android:name="android.intent.category.BROWSABLE" />
+56-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:32:17-78
+56-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:32:27-75
+57
+58                <data android:scheme="content" />
+58-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:33:17-50
+58-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:33:23-47
+59                <data android:scheme="file" />
+59-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:33:17-50
+59-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:33:23-47
+60                <data android:mimeType="audio/*" />
+60-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:33:17-50
+60-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:35:23-49
+61                <data android:mimeType="application/ogg" />
+61-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:33:17-50
+61-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:35:23-49
+62            </intent-filter>
+63        </activity>
+64
+65        <provider
+65-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:39:9-42:39
+66            android:name="com.noirmusic.app.ArtProvider"
+66-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:40:13-40
+67            android:authorities="com.noirmusic.app.art"
+67-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:41:13-56
+68            android:exported="true" />
+68-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:42:13-36
+69
+70        <service
+70-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:43:9-50:19
+71            android:name="com.noirmusic.app.PlaybackService"
+71-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:44:13-44
+72            android:exported="true"
+72-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:45:13-36
+73            android:foregroundServiceType="mediaPlayback" >
+73-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:46:13-58
+74            <intent-filter>
+74-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:47:13-49:29
+75                <action android:name="androidx.media3.session.MediaSessionService" />
+75-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:48:17-86
+75-->/home/runner/work/musicnoir/musicnoir/app/src/main/AndroidManifest.xml:48:25-83
+76            </intent-filter>
+77        </service>
+78
+79        <activity
+79-->[androidx.compose.ui:ui-tooling-android:1.7.6] /home/runner/.gradle/caches/8.9/transforms/d4ab53c4d80d63d68ee160d2eeb8ddc0/transformed/ui-tooling-release/AndroidManifest.xml:23:9-25:39
+80            android:name="androidx.compose.ui.tooling.PreviewActivity"
+80-->[androidx.compose.ui:ui-tooling-android:1.7.6] /home/runner/.gradle/caches/8.9/transforms/d4ab53c4d80d63d68ee160d2eeb8ddc0/transformed/ui-tooling-release/AndroidManifest.xml:24:13-71
+81            android:exported="true" />
+81-->[androidx.compose.ui:ui-tooling-android:1.7.6] /home/runner/.gradle/caches/8.9/transforms/d4ab53c4d80d63d68ee160d2eeb8ddc0/transformed/ui-tooling-release/AndroidManifest.xml:25:13-36
+82
+83        <provider
+83-->[androidx.emoji2:emoji2:1.3.0] /home/runner/.gradle/caches/8.9/transforms/e9a4de5f87829d8e56de87ff35dfed60/transformed/emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
+84            android:name="androidx.startup.InitializationProvider"
+84-->[androidx.emoji2:emoji2:1.3.0] /home/runner/.gradle/caches/8.9/transforms/e9a4de5f87829d8e56de87ff35dfed60/transformed/emoji2-1.3.0/AndroidManifest.xml:25:13-67
+85            android:authorities="com.noirmusic.app.androidx-startup"
+85-->[androidx.emoji2:emoji2:1.3.0] /home/runner/.gradle/caches/8.9/transforms/e9a4de5f87829d8e56de87ff35dfed60/transformed/emoji2-1.3.0/AndroidManifest.xml:26:13-68
+86            android:exported="false" >
+86-->[androidx.emoji2:emoji2:1.3.0] /home/runner/.gradle/caches/8.9/transforms/e9a4de5f87829d8e56de87ff35dfed60/transformed/emoji2-1.3.0/AndroidManifest.xml:27:13-37
+87            <meta-data
+87-->[androidx.emoji2:emoji2:1.3.0] /home/runner/.gradle/caches/8.9/transforms/e9a4de5f87829d8e56de87ff35dfed60/transformed/emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
+88                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+88-->[androidx.emoji2:emoji2:1.3.0] /home/runner/.gradle/caches/8.9/transforms/e9a4de5f87829d8e56de87ff35dfed60/transformed/emoji2-1.3.0/AndroidManifest.xml:30:17-75
+89                android:value="androidx.startup" />
+89-->[androidx.emoji2:emoji2:1.3.0] /home/runner/.gradle/caches/8.9/transforms/e9a4de5f87829d8e56de87ff35dfed60/transformed/emoji2-1.3.0/AndroidManifest.xml:31:17-49
+90            <meta-data
+90-->[androidx.lifecycle:lifecycle-process:2.8.7] /home/runner/.gradle/caches/8.9/transforms/ef3f1b8cf943e0590111f6b7a018d36f/transformed/lifecycle-process-2.8.7/AndroidManifest.xml:29:13-31:52
+91                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+91-->[androidx.lifecycle:lifecycle-process:2.8.7] /home/runner/.gradle/caches/8.9/transforms/ef3f1b8cf943e0590111f6b7a018d36f/transformed/lifecycle-process-2.8.7/AndroidManifest.xml:30:17-78
+92                android:value="androidx.startup" />
+92-->[androidx.lifecycle:lifecycle-process:2.8.7] /home/runner/.gradle/caches/8.9/transforms/ef3f1b8cf943e0590111f6b7a018d36f/transformed/lifecycle-process-2.8.7/AndroidManifest.xml:31:17-49
+93            <meta-data
+93-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/runner/.gradle/caches/8.9/transforms/228beb4a3a120c3d6366d9a12367467c/transformed/profileinstaller-1.4.1/AndroidManifest.xml:29:13-31:52
+94                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+94-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/runner/.gradle/caches/8.9/transforms/228beb4a3a120c3d6366d9a12367467c/transformed/profileinstaller-1.4.1/AndroidManifest.xml:30:17-85
+95                android:value="androidx.startup" />
+95-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/runner/.gradle/caches/8.9/transforms/228beb4a3a120c3d6366d9a12367467c/transformed/profileinstaller-1.4.1/AndroidManifest.xml:31:17-49
+96        </provider>
+97
+98        <receiver
+98-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/runner/.gradle/caches/8.9/transforms/228beb4a3a120c3d6366d9a12367467c/transformed/profileinstaller-1.4.1/AndroidManifest.xml:34:9-52:20
+99            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+99-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/runner/.gradle/caches/8.9/transforms/228beb4a3a120c3d6366d9a12367467c/transformed/profileinstaller-1.4.1/AndroidManifest.xml:35:13-76
+100            android:directBootAware="false"
+100-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/runner/.gradle/caches/8.9/transforms/228beb4a3a120c3d6366d9a12367467c/transformed/profileinstaller-1.4.1/AndroidManifest.xml:36:13-44
+101            android:enabled="true"
+101-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/runner/.gradle/caches/8.9/transforms/228beb4a3a120c3d6366d9a12367467c/transformed/profileinstaller-1.4.1/AndroidManifest.xml:37:13-35
+102            android:exported="true"
+102-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/runner/.gradle/caches/8.9/transforms/228beb4a3a120c3d6366d9a12367467c/transformed/profileinstaller-1.4.1/AndroidManifest.xml:38:13-36
+103            android:permission="android.permission.DUMP" >
+103-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/runner/.gradle/caches/8.9/transforms/228beb4a3a120c3d6366d9a12367467c/transformed/profileinstaller-1.4.1/AndroidManifest.xml:39:13-57
+104            <intent-filter>
+104-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/runner/.gradle/caches/8.9/transforms/228beb4a3a120c3d6366d9a12367467c/transformed/profileinstaller-1.4.1/AndroidManifest.xml:40:13-42:29
+105                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+105-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/runner/.gradle/caches/8.9/transforms/228beb4a3a120c3d6366d9a12367467c/transformed/profileinstaller-1.4.1/AndroidManifest.xml:41:17-91
+105-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/runner/.gradle/caches/8.9/transforms/228beb4a3a120c3d6366d9a12367467c/transformed/profileinstaller-1.4.1/AndroidManifest.xml:41:25-88
+106            </intent-filter>
+107            <intent-filter>
+107-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/runner/.gradle/caches/8.9/transforms/228beb4a3a120c3d6366d9a12367467c/transformed/profileinstaller-1.4.1/AndroidManifest.xml:43:13-45:29
+108                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+108-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/runner/.gradle/caches/8.9/transforms/228beb4a3a120c3d6366d9a12367467c/transformed/profileinstaller-1.4.1/AndroidManifest.xml:44:17-85
+108-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/runner/.gradle/caches/8.9/transforms/228beb4a3a120c3d6366d9a12367467c/transformed/profileinstaller-1.4.1/AndroidManifest.xml:44:25-82
+109            </intent-filter>
+110            <intent-filter>
+110-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/runner/.gradle/caches/8.9/transforms/228beb4a3a120c3d6366d9a12367467c/transformed/profileinstaller-1.4.1/AndroidManifest.xml:46:13-48:29
+111                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+111-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/runner/.gradle/caches/8.9/transforms/228beb4a3a120c3d6366d9a12367467c/transformed/profileinstaller-1.4.1/AndroidManifest.xml:47:17-88
+111-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/runner/.gradle/caches/8.9/transforms/228beb4a3a120c3d6366d9a12367467c/transformed/profileinstaller-1.4.1/AndroidManifest.xml:47:25-85
+112            </intent-filter>
+113            <intent-filter>
+113-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/runner/.gradle/caches/8.9/transforms/228beb4a3a120c3d6366d9a12367467c/transformed/profileinstaller-1.4.1/AndroidManifest.xml:49:13-51:29
+114                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+114-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/runner/.gradle/caches/8.9/transforms/228beb4a3a120c3d6366d9a12367467c/transformed/profileinstaller-1.4.1/AndroidManifest.xml:50:17-95
+114-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/runner/.gradle/caches/8.9/transforms/228beb4a3a120c3d6366d9a12367467c/transformed/profileinstaller-1.4.1/AndroidManifest.xml:50:25-92
+115            </intent-filter>
+116        </receiver>
+117    </application>
+118
+119</manifest>
