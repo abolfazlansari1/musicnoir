@@ -374,7 +374,7 @@ private fun AlbumsTab(state: LazyGridState) {
     if (vm.albums.isEmpty()) { EmptyState(title = "No albums", subtitle = "Albums are built from your songs' tags."); return }
     var order by rememberSaveable { mutableIntStateOf(0) }
     var asList by rememberSaveable { mutableStateOf(false) }
-    val labels = listOf("Name", "Artist", "Song count")
+    val labels = listOf("Name", "Artist", "Songs")
     val albums = remember(vm.albums, order) {
         when (order) {
             1 -> vm.albums.sortedWith(compareBy({ it.artist.lowercase() }, { it.name.lowercase() }))
@@ -388,7 +388,6 @@ private fun AlbumsTab(state: LazyGridState) {
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("${albums.size} albums  •  Sort", color = N.muted, fontSize = 12.sp, modifier = Modifier.padding(end = 4.dp))
                 labels.forEachIndexed { i, l -> NoirChip(l, order == i, { order = i }) }
                 Spacer(Modifier.weight(1f))
                 IconButton(onClick = { asList = !asList }, modifier = Modifier.size(36.dp)) {
