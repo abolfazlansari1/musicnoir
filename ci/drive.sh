@@ -36,10 +36,12 @@ adb shell input keyevent 4; sleep 1
 T "Speed and pitch"; S 14_speed 2
 adb shell input keyevent 4; sleep 1
 T "Close player"; sleep 2
+adb shell monkey -p com.noirmusic.app -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1; sleep 3
 T "Home"; S 15_home_playing 3
 T "Library"; sleep 1
 T "Concrete Garden" 0 0 0 long; S 16_selection 2
 adb shell input keyevent 4; sleep 1
+adb shell monkey -p com.noirmusic.app -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1; sleep 2
 T "Search"; sleep 1
 T "Songs, artists, albums"; adb shell input text "luma"; sleep 1; adb shell input keyevent 111; S 17_search 2
 T "Settings"; S 18_settings
