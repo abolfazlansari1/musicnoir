@@ -199,7 +199,14 @@ private fun NoirRoot(vm: PlayerViewModel) {
                         }
                     ) { nav ->
                         if (nav.route == null) {
-                            Crossfade(tab, label = "tabs", animationSpec = tween(220)) { t ->
+                            AnimatedContent(
+                                tab, label = "tabs",
+                                transitionSpec = {
+                                    val dir = if (targetState > initialState) 1 else -1
+                                    (slideInHorizontally(tween(340, easing = FastOutSlowInEasing)) { dir * it / 4 } + fadeIn(tween(280, delayMillis = 40)))
+                                        .togetherWith(slideOutHorizontally(tween(280, easing = FastOutSlowInEasing)) { -dir * it / 6 } + fadeOut(tween(160)))
+                                }
+                            ) { t ->
                                 when (t) {
                                     0 -> HomeScreen(states.home)
                                     1 -> LibraryScreen(states, librarySub) { librarySub = it }

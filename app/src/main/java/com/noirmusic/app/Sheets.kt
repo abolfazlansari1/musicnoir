@@ -176,7 +176,7 @@ fun PlaylistPicker(tracks: List<MusicTrack>, onDismiss: () -> Unit) {
         onDismissRequest = onDismiss, containerColor = N.panel2,
         title = { Text(if (tracks.size == 1) "Add to playlist" else "Add ${tracks.size} songs to playlist", color = N.text) },
         text = {
-            LazyColumn(Modifier.heightIn(max = 320.dp)) {
+            LazyColumn(Modifier.heightIn(max = 320.dp), flingBehavior = rememberSmoothFling()) {
                 item {
                     Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { create = true }.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Rounded.Add, null, tint = N.accent); Spacer(Modifier.width(12.dp)); Text("New playlist", color = N.accent, fontWeight = FontWeight.Bold)
@@ -215,7 +215,7 @@ fun QueueSheet(onDismiss: () -> Unit) {
             }
             if (vm.queue.isEmpty()) {
                 EmptyState(icon = Icons.Rounded.QueueMusic, title = "Queue is empty", subtitle = "Play a song or add some with Add to queue.")
-            } else LazyColumn(state = state) {
+            } else LazyColumn(flingBehavior = rememberSmoothFling(), state = state) {
                 itemsIndexed(vm.queue, key = { i, t -> "${t.id}#$i" }) { i, t ->
                     val isCurrent = i == vm.queueIndex
                     var dragY by remember { mutableFloatStateOf(0f) }

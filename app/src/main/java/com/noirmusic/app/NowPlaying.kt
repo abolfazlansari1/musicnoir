@@ -1,5 +1,9 @@
 package com.noirmusic.app
 
+import androidx.compose.animation.slideInVertically
+import androidx.compose.ui.draw.blur
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.border
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.OutlinedButton
@@ -138,6 +142,10 @@ fun NowPlayingScreen(onClose: () -> Unit) {
             .background(N.bg)
             .background(Brush.verticalGradient(colorStops = arrayOf(0f to tint, .85f to N.bg)))
     ) {
+        if (android.os.Build.VERSION.SDK_INT >= 31) {
+            Artwork(track, Modifier.fillMaxSize().graphicsLayer { alpha = .55f }.blur(80.dp), px = 128, corner = 0.dp)
+        }
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colorStops = arrayOf(0f to Color.Black.copy(alpha = .10f), .5f to N.bg.copy(alpha = .45f), .9f to N.bg.copy(alpha = .94f)))))
         Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 22.dp)) {
             Row(Modifier.fillMaxWidth().dragToDismiss(offsetY, onClose), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onClose) { Icon(Icons.Rounded.KeyboardArrowDown, "Close player", tint = N.text, modifier = Modifier.size(30.dp)) }
@@ -170,21 +178,32 @@ fun NowPlayingScreen(onClose: () -> Unit) {
             Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 ControlIcon(Icons.Rounded.Shuffle, "Shuffle", vm.shuffle) { vm.toggleShuffle() }
                 Icon(Icons.Rounded.SkipPrevious, "Previous", tint = N.text, modifier = Modifier.size(44.dp).clip(CircleShape).bounceClick { vm.previous() }.padding(4.dp))
-                Box(Modifier.size(76.dp).clip(CircleShape).background(N.accent).bounceClick { haptic(); vm.togglePlay() }, contentAlignment = Alignment.Center) {
+                Box(Modifier.size(80.dp).shadow(20.dp, CircleShape, ambientColor = N.accent, spotColor = N.accent).clip(CircleShape).background(N.accent).bounceClick { haptic(); vm.togglePlay() }, contentAlignment = Alignment.Center) {
                     PlayPauseIcon(vm.isPlaying, N.onAccent, Modifier.size(42.dp))
                 }
                 Icon(Icons.Rounded.SkipNext, "Next", tint = N.text, modifier = Modifier.size(44.dp).clip(CircleShape).bounceClick { vm.next() }.padding(4.dp))
                 ControlIcon(if (vm.repeat == Player.REPEAT_MODE_ONE) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat, "Repeat", vm.repeat != Player.REPEAT_MODE_OFF) { vm.cycleRepeat() }
             }
 
-            vm.upNext?.let { n ->
-                Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable { ui.showQueue() }.padding(horizontal = 8.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("UP NEXT", color = N.muted, fontSize = 10.sp, letterSpacing = 1.5.sp, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.width(10.dp))
-                    Text("${n.title} • ${n.artist}", color = N.text.copy(alpha = .8f), fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+            vm.upNext?.let { nx ->
+                Row(
+                    Modifier.fillMaxWidth().padding(top = 4.dp).clip(RoundedCornerShape(18.dp)).background(Color.White.copy(alpha = .07f))
+                        .clickable { ui.showQueue() }.padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Artwork(nx, Modifier.size(38.dp), px = 96, corner = 10.dp)
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text("UP NEXT", color = N.muted, fontSize = 10.sp, letterSpacing = 1.5.sp, fontWeight = FontWeight.Bold)
+                        Text("${nx.title}  •  ${nx.artist}", color = N.text.copy(alpha = .9f), fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                    Icon(Icons.Rounded.QueueMusic, null, tint = N.muted, modifier = Modifier.padding(horizontal = 8.dp).size(20.dp))
                 }
             }
-            Row(Modifier.fillMaxWidth().padding(bottom = 6.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+            Row(
+                Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 8.dp).clip(RoundedCornerShape(28.dp)).background(Color.White.copy(alpha = .06f)).padding(horizontal = 6.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
                 ControlIcon(Icons.Rounded.Lyrics, "Lyrics", showLyrics) { showLyrics = !showLyrics }
                 ControlIcon(Icons.Rounded.Speed, "Speed and pitch", vm.speed != 1f || vm.pitch != 1f) { ui.showSpeed() }
                 ControlIcon(Icons.Rounded.Timer, "Sleep timer", sleepActive > 0 || endOfTrack) { ui.showSleep() }
@@ -238,8 +257,8 @@ private fun ArtworkPager(side: androidx.compose.ui.unit.Dp, modifier: Modifier) 
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Artwork(
                 queue.getOrNull(page),
-                Modifier.size(side).graphicsLayer { scaleX = scale; scaleY = scale }.shadow(24.dp, RoundedCornerShape(28.dp), clip = false, ambientColor = Color.Black, spotColor = Color.Black),
-                px = 720, corner = 28.dp
+                Modifier.size(side).graphicsLayer { scaleX = scale; scaleY = scale }.shadow(32.dp, RoundedCornerShape(30.dp), clip = false, ambientColor = vm.artColor ?: Color.Black, spotColor = vm.artColor ?: Color.Black),
+                px = 720, corner = 30.dp
             )
         }
     }
@@ -274,7 +293,7 @@ private fun LyricsList(s: LyricsState.Loaded, onImport: () -> Unit) {
     LaunchedEffect(active) {
         if (active >= 0) listState.animateScrollToItem(active, -(listState.layoutInfo.viewportSize.height / 3))
     }
-    LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 90.dp)) {
+    LazyColumn(Modifier.fillMaxSize(), flingBehavior = rememberSmoothFling(), state = listState, contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 90.dp)) {
         itemsIndexed(s.lines) { i, line ->
             val isActive = i == active
             val color by animateColorAsState(if (!s.synced || isActive) N.text else N.text.copy(alpha = .38f), tween(250), label = "lc")
@@ -301,33 +320,51 @@ fun MiniPlayer(onOpen: () -> Unit) {
     val vm = LocalVm.current
     val track = vm.current ?: return
     val tint by animateColorAsState(vm.artColor ?: N.panel2, tween(600), label = "minitint")
-    var dragX by remember { mutableFloatStateOf(0f) }
+    val x = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
+    var dx by remember { mutableFloatStateOf(0f) }
+    var dy by remember { mutableFloatStateOf(0f) }
+    val shape = RoundedCornerShape(24.dp)
+    val progress = if (vm.duration > 0) (vm.position.toFloat() / vm.duration).coerceIn(0f, 1f) else 0f
     Box(
-        Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp)
-            .clip(RoundedCornerShape(22.dp))
-            .background(N.panel)
-            .background(Brush.horizontalGradient(listOf(tint.copy(alpha = .85f), tint.copy(alpha = .25f))))
+        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)
+            .offset { IntOffset(x.value.roundToInt(), 0) }
+            .graphicsLayer { alpha = 1f - (kotlin.math.abs(x.value) / 700f).coerceIn(0f, .5f) }
+            .shadow(14.dp, shape, ambientColor = tint, spotColor = tint)
+            .clip(shape).background(N.panel2)
+            .background(Brush.horizontalGradient(listOf(tint.copy(alpha = .55f), tint.copy(alpha = .12f))))
+            .border(1.dp, Color.White.copy(alpha = .09f), shape)
             .pointerInput(Unit) {
-                detectHorizontalDragGestures(
-                    onDragEnd = { if (dragX > 120) vm.previous() else if (dragX < -120) vm.next(); dragX = 0f },
-                    onDragCancel = { dragX = 0f }
-                ) { _, dx -> dragX += dx }
+                detectDragGestures(
+                    onDragStart = { dx = 0f; dy = 0f },
+                    onDragEnd = {
+                        val horizontal = kotlin.math.abs(dx) > kotlin.math.abs(dy)
+                        if (horizontal && dx > 140f) vm.previous() else if (horizontal && dx < -140f) vm.next() else if (!horizontal && dy < -60f) onOpen()
+                        scope.launch { x.animateTo(0f, spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMediumLow)) }
+                    },
+                    onDragCancel = { scope.launch { x.animateTo(0f) } }
+                ) { change, amount ->
+                    change.consume(); dx += amount.x; dy += amount.y
+                    if (kotlin.math.abs(dx) > kotlin.math.abs(dy)) scope.launch { x.snapTo(x.value + amount.x * .6f) }
+                }
             }
             .clickable(onClick = onOpen)
     ) {
-        Row(Modifier.padding(start = 10.dp, end = 4.dp, top = 8.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            Artwork(track, Modifier.size(46.dp), px = 160, corner = 12.dp)
+        Row(Modifier.padding(start = 10.dp, end = 6.dp, top = 9.dp, bottom = 9.dp), verticalAlignment = Alignment.CenterVertically) {
+            Artwork(track, Modifier.size(50.dp), px = 160, corner = 15.dp)
             Spacer(Modifier.width(12.dp))
-            AnimatedContent(track, label = "minititle", modifier = Modifier.weight(1f), transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(120)) }) { t ->
+            AnimatedContent(track, label = "minititle", modifier = Modifier.weight(1f), transitionSpec = { (fadeIn(tween(240)) + slideInVertically(tween(240)) { it / 4 }) togetherWith fadeOut(tween(120)) }) { t ->
                 Column {
-                    Text(t.title, color = N.text, fontWeight = FontWeight.Bold, fontSize = 14.sp, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                    Text(t.title, color = N.text, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                     Text(t.artist, color = N.text.copy(alpha = .7f), fontSize = 12.sp, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                 }
             }
-            IconButton(onClick = { vm.togglePlay() }) { PlayPauseIcon(vm.isPlaying, N.text, Modifier.size(30.dp)) }
+            Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxSize().padding(2.dp), color = N.accent, trackColor = Color.White.copy(alpha = .14f), strokeWidth = 2.5.dp)
+                IconButton(onClick = { vm.togglePlay() }, modifier = Modifier.size(40.dp)) { PlayPauseIcon(vm.isPlaying, N.text, Modifier.size(28.dp)) }
+            }
             IconButton(onClick = { vm.next() }) { Icon(Icons.Rounded.SkipNext, "Next", tint = N.text, modifier = Modifier.size(28.dp)) }
         }
-        MiniProgress(Modifier.align(Alignment.BottomStart))
     }
 }
 

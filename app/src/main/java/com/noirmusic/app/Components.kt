@@ -1,5 +1,6 @@
 package com.noirmusic.app
 
+import androidx.compose.animation.core.animateDecay
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
@@ -338,3 +339,21 @@ fun formatSize(bytes: Long): String {
 }
 
 fun songCount(n: Int) = if (n == 1) "1 song" else "$n songs"
+
+private object SmoothFling : androidx.compose.foundation.gestures.FlingBehavior {
+    private val spec = androidx.compose.animation.core.exponentialDecay<Float>(frictionMultiplier = 0.62f)
+    override suspend fun androidx.compose.foundation.gestures.ScrollScope.performFling(initialVelocity: Float): Float {
+        var last = 0f
+        val state = androidx.compose.animation.core.AnimationState(0f, initialVelocity)
+        state.animateDecay(spec) {
+            val delta = value - last
+            val consumed = scrollBy(delta)
+            last = value
+            if (kotlin.math.abs(delta - consumed) > 0.5f) cancelAnimation()
+        }
+        return state.velocity
+    }
+}
+
+@Composable
+fun rememberSmoothFling(): androidx.compose.foundation.gestures.FlingBehavior = SmoothFling

@@ -1,5 +1,8 @@
 package com.noirmusic.app
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -109,7 +112,7 @@ fun HomeScreen(state: LazyListState) {
     val hour = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
     val greeting = when { hour < 5 -> "Good night"; hour < 12 -> "Good morning"; hour < 18 -> "Good afternoon"; else -> "Good evening" }
     val currentId = vm.current?.id
-    LazyColumn(state = state, contentPadding = PaddingValues(bottom = 20.dp)) {
+    LazyColumn(flingBehavior = rememberSmoothFling(), state = state, contentPadding = PaddingValues(bottom = 20.dp)) {
         item {
             Row(Modifier.fillMaxWidth().padding(start = 18.dp, end = 8.dp, top = 14.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
@@ -152,7 +155,7 @@ fun HomeScreen(state: LazyListState) {
             item { SectionHeader("Jump back in", action = "See all") { ui.navigate(Route.Recent) } }
             item {
                 val list = vm.recentTracks.take(15)
-                LazyRow(contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                LazyRow(flingBehavior = rememberSmoothFling(), contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                     itemsIndexed(list, key = { _, t -> "r${t.id}" }) { i, t -> TrackCard(t, t.id == currentId) { vm.play(list, i) } }
                 }
             }
@@ -160,14 +163,14 @@ fun HomeScreen(state: LazyListState) {
         item { SectionHeader("Recently added") }
         item {
             val list = vm.recentlyAdded.take(15)
-            LazyRow(contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            LazyRow(flingBehavior = rememberSmoothFling(), contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 itemsIndexed(list, key = { _, t -> "a${t.id}" }) { i, t -> TrackCard(t, t.id == currentId) { vm.play(list, i) } }
             }
         }
         if (vm.albums.isNotEmpty()) {
             item { SectionHeader("Albums") }
             item {
-                LazyRow(contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                LazyRow(flingBehavior = rememberSmoothFling(), contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                     items(vm.albums.take(20), key = { "al${it.id}" }) { a -> AlbumCard(a, Modifier.width(138.dp)) { ui.navigate(Route.Album(a.id)) } }
                 }
             }
@@ -264,7 +267,7 @@ fun LibraryScreen(states: ListStates, sub: Int, onSub: (Int) -> Unit) {
     val labels = listOf("Songs", "Albums", "Artists", "Folders", "Playlists")
     Column(Modifier.fillMaxSize()) {
         ScreenTitle("Library")
-        LazyRow(contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        LazyRow(flingBehavior = rememberSmoothFling(), contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(listOf(0, 4, 1, 2, 3)) { i -> NoirChip(labels[i], sub == i, { onSub(i) }) }
         }
         Spacer(Modifier.height(8.dp))
@@ -272,7 +275,12 @@ fun LibraryScreen(states: ListStates, sub: Int, onSub: (Int) -> Unit) {
             EmptyState(title = "Music access required", subtitle = "Allow audio access to see your library.", actionLabel = "Allow access", onAction = ui.requestPermission)
             return
         }
-        AnimatedContent(sub, label = "libsub", transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(120)) }) { s ->
+        val order = listOf(0, 4, 1, 2, 3)
+        AnimatedContent(sub, label = "libsub", transitionSpec = {
+            val dir = if (order.indexOf(targetState) > order.indexOf(initialState)) 1 else -1
+            (slideInHorizontally(tween(320, easing = FastOutSlowInEasing)) { dir * it / 5 } + fadeIn(tween(260, delayMillis = 40)))
+                .togetherWith(slideOutHorizontally(tween(260, easing = FastOutSlowInEasing)) { -dir * it / 6 } + fadeOut(tween(140)))
+        }) { s ->
             when (s) {
                 0 -> SongsTab(states.songs)
                 1 -> AlbumsTab(states.albums)
@@ -313,7 +321,7 @@ private fun SongsTab(state: LazyListState) {
         PlayShuffleRow({ vm.play(songs, 0, false) }, { vm.playShuffled(songs) })
         val letters = remember(songs, vm.sortKey) { if (vm.sortKey in 0..2 && songs.size > 40) buildLetters(songs, vm.sortKey) else emptyList() }
         Box(Modifier.fillMaxSize()) {
-            LazyColumn(state = state, contentPadding = PaddingValues(bottom = 16.dp, end = if (letters.isEmpty()) 0.dp else 14.dp)) {
+            LazyColumn(flingBehavior = rememberSmoothFling(), state = state, contentPadding = PaddingValues(bottom = 16.dp, end = if (letters.isEmpty()) 0.dp else 14.dp)) {
                 itemsIndexed(songs, key = { _, t -> t.id }) { i, t ->
                     TrackRow(t, t.id == currentId, vm.isPlaying, { vm.play(songs, i, false) }, modifier = Modifier.animateItem())
                 }
@@ -383,7 +391,7 @@ private fun AlbumsTab(state: LazyGridState) {
         }
     }
     LazyVerticalGrid(
-        GridCells.Fixed(2), state = state, contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = 16.dp, top = 4.dp),
+        GridCells.Fixed(2), flingBehavior = rememberSmoothFling(), state = state, contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = 16.dp, top = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
@@ -413,7 +421,7 @@ private fun ArtistsTab(state: LazyListState) {
     val vm = LocalVm.current
     val ui = LocalUi.current
     if (vm.artists.isEmpty()) { EmptyState(title = "No artists", subtitle = "Artists are built from your songs' tags."); return }
-    LazyColumn(state = state, contentPadding = PaddingValues(bottom = 16.dp)) {
+    LazyColumn(flingBehavior = rememberSmoothFling(), state = state, contentPadding = PaddingValues(bottom = 16.dp)) {
         items(vm.artists, key = { it.name }) { a ->
             Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 1.dp).clip(RoundedCornerShape(16.dp)).clickable { ui.navigate(Route.Artist(a.name)) }.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Artwork(a.tracks.first(), Modifier.size(54.dp), px = 160, corner = 27.dp)
@@ -432,7 +440,7 @@ private fun FoldersTab(state: LazyListState) {
     val vm = LocalVm.current
     val ui = LocalUi.current
     if (vm.folders.isEmpty()) { EmptyState(title = "No folders", subtitle = "Folders appear when songs are found."); return }
-    LazyColumn(state = state, contentPadding = PaddingValues(bottom = 16.dp)) {
+    LazyColumn(flingBehavior = rememberSmoothFling(), state = state, contentPadding = PaddingValues(bottom = 16.dp)) {
         items(vm.folders, key = { it.path }) { f ->
             Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 1.dp).clip(RoundedCornerShape(16.dp)).clickable { ui.navigate(Route.Folder(f.path)) }.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(54.dp).clip(RoundedCornerShape(14.dp)).background(N.panel2), contentAlignment = Alignment.Center) { Icon(Icons.Rounded.Folder, null, tint = N.accent) }
@@ -452,7 +460,7 @@ private fun PlaylistsTab(state: LazyListState) {
     val vm = LocalVm.current
     val ui = LocalUi.current
     var create by remember { mutableStateOf(false) }
-    LazyColumn(state = state, contentPadding = PaddingValues(bottom = 16.dp)) {
+    LazyColumn(flingBehavior = rememberSmoothFling(), state = state, contentPadding = PaddingValues(bottom = 16.dp)) {
         item {
             Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 4.dp).clip(RoundedCornerShape(16.dp)).background(N.panel).bounceClick { create = true }.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(40.dp).clip(CircleShape).background(N.accent), contentAlignment = Alignment.Center) { Icon(Icons.Rounded.Add, null, tint = N.onAccent) }
@@ -495,7 +503,7 @@ fun RouteScreen(route: Route) {
                 val albs = vm.albums.filter { al -> al.tracks.any { it.artist == a.name } }
                 if (albs.size > 1) {
                     SectionHeader("Albums")
-                    LazyRow(contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    LazyRow(flingBehavior = rememberSmoothFling(), contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                         items(albs, key = { it.id }) { al -> AlbumCard(al, Modifier.width(130.dp)) { ui.navigate(Route.Album(al.id)) } }
                     }
                 }
@@ -569,7 +577,7 @@ fun CollectionScreen(
             if (tracks.isNotEmpty()) IconButton(onClick = { ui.addToPlaylist(tracks) }) { Icon(Icons.Rounded.QueueMusic, "Add all to playlist", tint = N.text) }
             actions()
         }
-        LazyColumn(contentPadding = PaddingValues(bottom = 16.dp)) {
+        LazyColumn(flingBehavior = rememberSmoothFling(), contentPadding = PaddingValues(bottom = 16.dp)) {
             item {
                 Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Artwork(cover, Modifier.size(190.dp), px = 520, corner = if (round) 95.dp else 26.dp)

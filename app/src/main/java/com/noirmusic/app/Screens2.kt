@@ -139,11 +139,11 @@ fun SearchScreen(state: LazyListState) {
                 }
             }
             songs.isEmpty() && albums.isEmpty() && artists.isEmpty() -> EmptyState(icon = Icons.Rounded.Search, title = "No results", subtitle = "Nothing matches \"$query\".")
-            else -> LazyColumn(state = state, contentPadding = PaddingValues(bottom = 16.dp)) {
+            else -> LazyColumn(flingBehavior = rememberSmoothFling(), state = state, contentPadding = PaddingValues(bottom = 16.dp)) {
                 if (artists.isNotEmpty()) {
                     item { SectionHeader("Artists") }
                     item {
-                        LazyRow(contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                        LazyRow(flingBehavior = rememberSmoothFling(), contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                             items(artists, key = { "ar${it.name}" }) { a ->
                                 Column(Modifier.width(92.dp).bounceClick { ui.navigate(Route.Artist(a.name)) }, horizontalAlignment = Alignment.CenterHorizontally) {
                                     Artwork(a.tracks.first(), Modifier.size(84.dp), px = 200, corner = 42.dp)
@@ -156,7 +156,7 @@ fun SearchScreen(state: LazyListState) {
                 if (albums.isNotEmpty()) {
                     item { SectionHeader("Albums") }
                     item {
-                        LazyRow(contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                        LazyRow(flingBehavior = rememberSmoothFling(), contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                             items(albums, key = { "al${it.id}" }) { a -> AlbumCard(a, Modifier.width(130.dp)) { ui.navigate(Route.Album(a.id)) } }
                         }
                     }
@@ -215,7 +215,7 @@ fun SettingsScreen(state: LazyListState) {
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri -> if (uri != null) vm.exportBackup(uri) }
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> if (uri != null) vm.importBackup(uri) }
     val version = remember { runCatching { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName }.getOrNull() ?: "" }
-    LazyColumn(state = state, contentPadding = PaddingValues(bottom = 20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    LazyColumn(flingBehavior = rememberSmoothFling(), state = state, contentPadding = PaddingValues(bottom = 20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item { ScreenTitle("Settings") }
         item {
             SettingsCard("Appearance") {
@@ -304,7 +304,7 @@ fun SettingsScreen(state: LazyListState) {
 @Composable
 fun EqualizerScreen(onBack: () -> Unit) {
     val fx by AudioFx.state.collectAsState()
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    LazyColumn(Modifier.fillMaxSize(), flingBehavior = rememberSmoothFling(), contentPadding = PaddingValues(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item { TopBar("Equalizer", onBack) { TextButton(onClick = { AudioFx.reset() }, enabled = fx.available) { Text("Reset", color = if (fx.available) N.accent else N.muted) } } }
         item {
             Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp).clip(RoundedCornerShape(20.dp)).background(N.panel).padding(16.dp)) {
@@ -317,7 +317,7 @@ fun EqualizerScreen(onBack: () -> Unit) {
                 }
                 if (fx.available && fx.presets.isNotEmpty()) {
                     Spacer(Modifier.height(12.dp))
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    LazyRow(flingBehavior = rememberSmoothFling(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         item { NoirChip("Custom", fx.preset == -1, { }) }
                         itemsIndexed(fx.presets) { i, name -> NoirChip(name, fx.preset == i, { AudioFx.usePreset(i) }) }
                     }
