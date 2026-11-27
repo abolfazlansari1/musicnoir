@@ -208,10 +208,7 @@ private fun SeekSection() {
         SeekBar(progress = if (vm.duration > 0) vm.position.toFloat() / vm.duration else 0f, onSeek = { vm.seekFraction(it) }, color = N.text)
         Row(Modifier.fillMaxWidth().padding(horizontal = 2.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(formatTime(vm.position), color = N.text.copy(alpha = .65f), fontSize = 12.sp, modifier = Modifier.weight(1f))
-            Icon(Icons.Rounded.Replay10, "Back 10 seconds", tint = N.text.copy(alpha = .75f), modifier = Modifier.size(30.dp).clip(CircleShape).bounceClick { vm.seekBy(-10_000) }.padding(3.dp))
-            Spacer(Modifier.width(18.dp))
-            Icon(Icons.Rounded.Forward10, "Forward 10 seconds", tint = N.text.copy(alpha = .75f), modifier = Modifier.size(30.dp).clip(CircleShape).bounceClick { vm.seekBy(10_000) }.padding(3.dp))
-            Text(formatTime(vm.duration), color = N.text.copy(alpha = .65f), fontSize = 12.sp, textAlign = androidx.compose.ui.text.style.TextAlign.End, modifier = Modifier.weight(1f))
+            Text(formatTime(vm.duration), color = N.text.copy(alpha = .65f), fontSize = 12.sp, modifier = Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.End)
         }
     }
 }

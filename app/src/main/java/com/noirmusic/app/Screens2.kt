@@ -13,6 +13,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -219,19 +220,21 @@ fun SettingsScreen(state: LazyListState) {
         item {
             SettingsCard("Appearance") {
                 Text("Accent color", color = N.text, fontSize = 15.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
-                Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                Row(Modifier.fillMaxWidth().horizontalScroll(androidx.compose.foundation.rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     val swatches = AccentChoices.toMutableList().also {
                         if (android.os.Build.VERSION.SDK_INT >= 31) it.add("Material You" to androidx.compose.material3.dynamicDarkColorScheme(ctx).primary)
                     }
                     swatches.forEachIndexed { i, (name, color) ->
                         val sel = vm.accent == i
                         val scale by animateFloatAsState(if (sel) 1.12f else 1f, spring(Spring.DampingRatioMediumBouncy), label = "sw")
-                        Box(
-                            Modifier.size(38.dp).scale(scale).clip(CircleShape).background(color)
-                                .then(if (sel) Modifier.border(3.dp, Color.White, CircleShape) else Modifier)
-                                .clickable { vm.chooseAccent(i) },
-                            contentAlignment = Alignment.Center
-                        ) { if (sel) Icon(Icons.Rounded.Check, name, tint = Color.Black.copy(alpha = .75f), modifier = Modifier.size(20.dp)) }
+                        Column(Modifier.clickable(interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null) { vm.chooseAccent(i) }, horizontalAlignment = Alignment.CenterHorizontally) {
+                            Box(
+                                Modifier.size(46.dp).scale(scale).clip(CircleShape).background(color)
+                                    .then(if (sel) Modifier.border(3.dp, Color.White, CircleShape) else Modifier.border(1.dp, Color.White.copy(alpha = .12f), CircleShape)),
+                                contentAlignment = Alignment.Center
+                            ) { if (sel) Icon(Icons.Rounded.Check, name, tint = Color.Black.copy(alpha = .75f), modifier = Modifier.size(22.dp)) }
+                            Text(name, color = if (sel) N.text else N.muted, fontSize = 11.sp, maxLines = 1, modifier = Modifier.padding(top = 6.dp))
+                        }
                     }
                 }
                 SettingRow("Pure black background", "Saves battery on OLED screens") { NoirSwitch(vm.amoled) { vm.chooseAmoled(it) } }

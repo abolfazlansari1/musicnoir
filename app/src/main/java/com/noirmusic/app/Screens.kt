@@ -265,7 +265,7 @@ fun LibraryScreen(states: ListStates, sub: Int, onSub: (Int) -> Unit) {
     Column(Modifier.fillMaxSize()) {
         ScreenTitle("Library")
         LazyRow(contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            itemsIndexed(labels) { i, l -> NoirChip(l, sub == i, { onSub(i) }) }
+            items(listOf(0, 4, 1, 2, 3)) { i -> NoirChip(labels[i], sub == i, { onSub(i) }) }
         }
         Spacer(Modifier.height(8.dp))
         if (!vm.permissionGranted) {
