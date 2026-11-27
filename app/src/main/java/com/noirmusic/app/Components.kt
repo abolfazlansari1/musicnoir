@@ -336,3 +336,5 @@ fun formatSize(bytes: Long): String {
     val mb = bytes / 1048576.0
     return if (mb >= 1) String.format(Locale.US, "%.1f MB", mb) else String.format(Locale.US, "%.0f KB", bytes / 1024.0)
 }
+
+fun songCount(n: Int) = if (n == 1) "1 song" else "$n songs"

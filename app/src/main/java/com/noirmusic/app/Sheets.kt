@@ -201,7 +201,7 @@ fun QueueSheet(onDismiss: () -> Unit) {
             Row(Modifier.fillMaxWidth().padding(start = 22.dp, end = 10.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Queue", color = N.text, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
-                    Text("${vm.queue.size} songs", color = N.muted, fontSize = 12.sp)
+                    Text(songCount(vm.queue.size), color = N.muted, fontSize = 12.sp)
                 }
                 TextButton(onClick = { saving = true }, enabled = vm.queue.isNotEmpty()) { Text("Save", color = if (vm.queue.isNotEmpty()) N.accent else N.muted) }
                 TextButton(onClick = { vm.clearUpcoming() }, enabled = vm.queueIndex < vm.queue.lastIndex) { Text("Clear upcoming", color = if (vm.queueIndex < vm.queue.lastIndex) N.accent else N.muted) }

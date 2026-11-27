@@ -130,16 +130,16 @@ fun HomeScreen(state: LazyListState) {
         item { HeroCard() }
         item {
             val tiles = buildList<@Composable (Modifier) -> Unit> {
-                add { m -> QuickTile("Shuffle all", "${vm.tracks.size} songs", Icons.Rounded.Shuffle, true, m) { vm.playShuffled(vm.sortedTracks) } }
-                if (vm.favoriteTracks.isNotEmpty()) add { m -> QuickTile("Favorites", "${vm.favoriteTracks.size} songs", Icons.Rounded.Favorite, false, m) { ui.navigate(Route.Favorites) } }
-                if (vm.recentTracks.isNotEmpty()) add { m -> QuickTile("Recently played", "${vm.recentTracks.size} songs", Icons.Rounded.History, false, m) { ui.navigate(Route.Recent) } }
-                if (vm.mostPlayed.isNotEmpty()) add { m -> QuickTile("Most played", "${vm.mostPlayed.size} songs", Icons.Rounded.TrendingUp, false, m) { ui.navigate(Route.MostPlayed) } }
+                add { m -> QuickTile("Shuffle all", songCount(vm.tracks.size), Icons.Rounded.Shuffle, true, m) { vm.playShuffled(vm.sortedTracks) } }
+                if (vm.favoriteTracks.isNotEmpty()) add { m -> QuickTile("Favorites", songCount(vm.favoriteTracks.size), Icons.Rounded.Favorite, false, m) { ui.navigate(Route.Favorites) } }
+                if (vm.recentTracks.isNotEmpty()) add { m -> QuickTile("Recently played", songCount(vm.recentTracks.size), Icons.Rounded.History, false, m) { ui.navigate(Route.Recent) } }
+                if (vm.mostPlayed.isNotEmpty()) add { m -> QuickTile("Most played", songCount(vm.mostPlayed.size), Icons.Rounded.TrendingUp, false, m) { ui.navigate(Route.MostPlayed) } }
             }
             Column(Modifier.padding(horizontal = 20.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 tiles.chunked(2).forEach { rowTiles ->
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         rowTiles.forEach { t -> t(Modifier.weight(1f)) }
-                        if (rowTiles.size == 1) Spacer(Modifier.weight(1f))
+                        if (rowTiles.size == 1 && tiles.size > 1) Spacer(Modifier.weight(1f))
                     }
                 }
             }
@@ -438,7 +438,7 @@ private fun PlaylistsTab(state: LazyListState) {
                 Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f)) {
                     Text(name, color = N.text, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text("${ids.size} songs", color = N.muted, fontSize = 12.sp)
+                    Text(songCount(ids.size), color = N.muted, fontSize = 12.sp)
                 }
             }
         }
@@ -473,9 +473,9 @@ fun RouteScreen(route: Route) {
             val f = vm.folders.firstOrNull { it.path == route.path }
             if (f == null) MissingScreen("Folder") else CollectionScreen(f.name, "${f.tracks.size} songs • ${f.path}", f.tracks, f.tracks.first())
         }
-        Route.Favorites -> CollectionScreen("Favorites", "${vm.favoriteTracks.size} songs", vm.favoriteTracks, vm.favoriteTracks.firstOrNull(), emptyText = "Tap the heart on any song to add it here.")
-        Route.Recent -> CollectionScreen("Recently played", "${vm.recentTracks.size} songs", vm.recentTracks, vm.recentTracks.firstOrNull(), emptyText = "Songs you play will show up here.")
-        Route.MostPlayed -> CollectionScreen("Most played", "${vm.mostPlayed.size} songs", vm.mostPlayed, vm.mostPlayed.firstOrNull(), emptyText = "Play some songs to build this list.")
+        Route.Favorites -> CollectionScreen("Favorites", songCount(vm.favoriteTracks.size), vm.favoriteTracks, vm.favoriteTracks.firstOrNull(), emptyText = "Tap the heart on any song to add it here.")
+        Route.Recent -> CollectionScreen("Recently played", songCount(vm.recentTracks.size), vm.recentTracks, vm.recentTracks.firstOrNull(), emptyText = "Songs you play will show up here.")
+        Route.MostPlayed -> CollectionScreen("Most played", songCount(vm.mostPlayed.size), vm.mostPlayed, vm.mostPlayed.firstOrNull(), emptyText = "Play some songs to build this list.")
         Route.Equalizer -> EqualizerScreen(onBack = ui.back)
         is Route.Playlist -> PlaylistScreen(route.name)
     }
@@ -499,7 +499,7 @@ private fun PlaylistScreen(name: String) {
     var rename by remember { mutableStateOf(false) }
     var delete by remember { mutableStateOf(false) }
     CollectionScreen(
-        title = name, subtitle = "${tracks.size} songs", tracks = tracks, cover = tracks.firstOrNull(),
+        title = name, subtitle = songCount(tracks.size), tracks = tracks, cover = tracks.firstOrNull(),
         emptyText = "Add songs from the ⋮ menu on any track.", showIndex = true,
         actions = {
             IconButton(onClick = { rename = true }) { Icon(Icons.Rounded.Edit, "Rename", tint = N.text) }
